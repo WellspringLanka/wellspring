@@ -190,6 +190,7 @@ body, html, #root {
   letter-spacing: 2px;
   padding: 10px 24px;
   background: linear-gradient(180deg, #ffffff 20%, #e0f2fe 65%, #7dd3fc 100%);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 12px 36px rgba(2, 132, 199, 0.5));
