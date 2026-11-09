@@ -8,7 +8,6 @@ const Layout = ({ children }) => (
         <h1 style={{ margin: 0, fontSize: '22px' }}>Dispensary System</h1>
       </Link>
       <nav style={{ fontSize: '14px' }}>
-        {/* Placeholder for future Patient Reservation System Login/Link */}
         <span style={{ opacity: 0.8 }}>Patient Portal (Coming Soon)</span>
       </nav>
     </header>
@@ -39,22 +38,22 @@ const Dashboard = () => {
       <h2 style={{ marginBottom: '20px', color: '#1f2937' }}>Select Module</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
         
-        <Link to="/admin" style={{ ...tileStyle, borderTop: '4px solid #8b5cf6' }}>
+        <Link to="/admin" className="custom-tile" style={{ ...tileStyle, borderTop: '4px solid #8b5cf6' }}>
           Admin & Reception
           <div style={{ fontSize: '12px', fontWeight: 'normal', color: '#6b7280', marginTop: '8px' }}>Patient Registration, Tickets, Reports</div>
         </Link>
 
-        <Link to="/doctor" style={{ ...tileStyle, borderTop: '4px solid #ef4444' }}>
+        <Link to="/doctor" className="custom-tile" style={{ ...tileStyle, borderTop: '4px solid #ef4444' }}>
           Doctor Consultation
           <div style={{ fontSize: '12px', fontWeight: 'normal', color: '#6b7280', marginTop: '8px' }}>Symptoms, Diagnoses, Prescriptions</div>
         </Link>
 
-        <Link to="/cashier" style={{ ...tileStyle, borderTop: '4px solid #10b981' }}>
-          Pharmacy & Cashier
-          <div style={{ fontSize: '12px', fontWeight: 'normal', color: '#6b7280', marginTop: '8px' }}>Handoffs, Billing, Medicine Issuing</div>
+        <Link to="/counter" className="custom-tile" style={{ ...tileStyle, borderTop: '4px solid #10b981' }}>
+          Counter
+          <div style={{ fontSize: '12px', fontWeight: 'normal', color: '#6b7280', marginTop: '8px' }}>Medicine Issuing & Billing</div>
         </Link>
 
-        <Link to="/grn" style={{ ...tileStyle, borderTop: '4px solid #f59e0b' }}>
+        <Link to="/grn" className="custom-tile" style={{ ...tileStyle, borderTop: '4px solid #f59e0b' }}>
           GRN (Inventory)
           <div style={{ fontSize: '12px', fontWeight: 'normal', color: '#6b7280', marginTop: '8px' }}>Stock Intake, Suppliers, Adjustments</div>
         </Link>
@@ -81,10 +80,10 @@ const DoctorView = () => (
   </div>
 );
 
-const CashierView = () => (
+const CounterView = () => (
   <div>
-    <h2>Pharmacy & Cashier</h2>
-    <p>Multi-tab supported billing and pharmacy issuing.</p>
+    <h2>Counter</h2>
+    <p>Multi-tab supported billing and medicine issuing.</p>
     <Link to="/">← Back to Dashboard</Link>
   </div>
 );
@@ -106,7 +105,7 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/admin" element={<AdminView />} />
           <Route path="/doctor" element={<DoctorView />} />
-          <Route path="/cashier" element={<CashierView />} />
+          <Route path="/counter" element={<CounterView />} />
           <Route path="/grn" element={<GRNView />} />
         </Routes>
       </Layout>
