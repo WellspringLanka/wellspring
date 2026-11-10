@@ -10,15 +10,15 @@ const TopNavbar = ({ currentTime, doctorOnline, counterOnline }) => (
       <span className="brand-name">Wellspring Health Care</span>
     </Link>
 
-    {/* Updated Navigation Links */}
     <nav className="nav-links">
       <a href="#hero" className="nav-item">Home</a>
+      <a href="#modules" className="nav-item">Terminals</a>
+      <Link to="/queue" className="nav-item">Queue</Link>
       <a href="#about" className="nav-item">About</a>
       <a href="#contact" className="nav-item">Contact Us</a>
       <span className="nav-portal-btn">Online Booking (Soon)</span>
     </nav>
 
-    {/* New Live Indicators */}
     <div className="nav-telemetry">
       <div className="staff-status-group">
         <div className="staff-badge">
@@ -40,11 +40,13 @@ const TopNavbar = ({ currentTime, doctorOnline, counterOnline }) => (
 // Main Front Page
 const HomePage = () => {
   const {
+    canvasRef,
     currentSlide,
     setCurrentSlide,
     currentTime,
     doctorOnline,
     counterOnline,
+    telemetry,
     heroStyle,
     tilesVisible
   } = useDashboardLogic();
@@ -53,7 +55,7 @@ const HomePage = () => {
     <div>
       <TopNavbar currentTime={currentTime} doctorOnline={doctorOnline} counterOnline={counterOnline} />
 
-      {/* HERO SECTION WITH SLIDING IMAGES & TANGERINE WELLSPRING TITLE */}
+      {/* HERO SECTION WITH SLIDER, MOLECULAR PARTICLES & TELEMETRY */}
       <section id="hero" className="hero-section">
         {SLIDER_IMAGES.map((imgUrl, index) => (
           <div
@@ -64,11 +66,43 @@ const HomePage = () => {
         ))}
         <div className="hero-overlay"></div>
 
+        <canvas ref={canvasRef} className="particle-canvas" />
+
         <div className="hero-content" style={heroStyle}>
-          <span className="medical-pill-tag">Patient Care & Dispensary Management</span>
+          <span className="medical-pill-tag">Patient Care &amp; Dispensary Management</span>
           <h1 className="wellspring-title">Wellspring</h1>
           <p className="healthcare-subtitle">Health Care Center</p>
-          <div className="clinical-divider"></div>
+
+          {/* Live Clinic Telemetry ("Pulse" Board - Privacy Safe) */}
+          <div className="telemetry-hud-bar">
+            <div className="telemetry-metric">
+              <span className="metric-indicator emerald"></span>
+              <div className="metric-text">
+                <span className="metric-label">Current Queue</span>
+                <span className="metric-value">{telemetry.activeQueue} Waiting</span>
+              </div>
+            </div>
+
+            <div className="telemetry-divider"></div>
+
+            <div className="telemetry-metric">
+              <span className="metric-indicator"></span>
+              <div className="metric-text">
+                <span className="metric-label">Daily Traffic</span>
+                <span className="metric-value">{telemetry.servedToday} Served Today</span>
+              </div>
+            </div>
+
+            <div className="telemetry-divider"></div>
+
+            <div className="telemetry-metric">
+              <span className="metric-indicator emerald"></span>
+              <div className="metric-text">
+                <span className="metric-label">Consultation Status</span>
+                <span className="metric-value">{telemetry.roomStatus}</span>
+              </div>
+            </div>
+          </div>
 
           <div className="slider-indicators">
             {SLIDER_IMAGES.map((_, index) => (
@@ -96,7 +130,7 @@ const HomePage = () => {
         </div>
 
         <div className="tiles-grid">
-          {/* 1. ADMIN TILE (Updated for Management) */}
+          {/* 1. ADMIN TILE */}
           <Link to="/admin" className={`module-tile ${tilesVisible ? 'slide-in' : ''}`}>
             <div className="tile-accent-line"></div>
             <div className="tile-top-row">
@@ -142,7 +176,7 @@ const HomePage = () => {
             </div>
           </Link>
 
-          {/* 3. COUNTER TILE (Updated for Registration & Dispensing) */}
+          {/* 3. COUNTER TILE */}
           <Link to="/counter" className={`module-tile ${tilesVisible ? 'slide-in' : ''}`}>
             <div className="tile-accent-line"></div>
             <div className="tile-top-row">
@@ -179,7 +213,7 @@ const HomePage = () => {
               </div>
               <span className="tile-badge">Inventory</span>
             </div>
-            <h3 className="tile-title">Stock & GRN</h3>
+            <h3 className="tile-title">Stock &amp; GRN</h3>
             <p className="tile-desc">
               Goods Received Notes, medicine batch intake, expiry tracking, and supplier inventory logs.
             </p>
@@ -211,6 +245,7 @@ export default function App() {
         <Route path="/doctor" element={<PlaceholderPage title="Doctor Consultation Portal" />} />
         <Route path="/counter" element={<PlaceholderPage title="Front Desk Counter Portal" />} />
         <Route path="/grn" element={<PlaceholderPage title="Stock & GRN Inventory Portal" />} />
+        <Route path="/queue" element={<PlaceholderPage title="Live Clinic Queue" />} />
       </Routes>
     </Router>
   );
