@@ -310,53 +310,144 @@ export default function DoctorPortal() {
             {/* TAB C: DIRECT WALK-IN PATIENT REGISTRATION */}
             {sidebarTab === 'add' && (
               <form onSubmit={handleCreateWalkInPatient}>
-                <label className="walkin-label">Patient Full Name *</label>
-                <input
-                  type="text"
-                  required
-                  className="walkin-input"
-                  placeholder="Enter full name"
-                  value={newPatientForm.name}
-                  onChange={(e) => setNewPatientForm({ ...newPatientForm, name: e.target.value })}
-                />
+                <div className="walkin-form-grid">
+                  <div className="walkin-form-group full-width">
+                    <label className="walkin-label">Patient Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      className="walkin-input"
+                      style={{ marginBottom: 0 }}
+                      placeholder="Enter full name"
+                      value={newPatientForm.name}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, name: e.target.value })}
+                    />
+                  </div>
 
-                <label className="walkin-label">Date of Birth</label>
-                <input
-                  type="date"
-                  className="walkin-input"
-                  value={newPatientForm.birth_date}
-                  onChange={(e) => setNewPatientForm({ ...newPatientForm, birth_date: e.target.value })}
-                />
+                  <div className="walkin-form-group">
+                    <label className="walkin-label">Gender *</label>
+                    <div className="walkin-radio-wrap">
+                      <label className="walkin-radio-label">
+                        <input
+                          type="radio"
+                          name="gender"
+                          value="1"
+                          checked={newPatientForm.gender === '1'}
+                          onChange={(e) => setNewPatientForm({ ...newPatientForm, gender: e.target.value })}
+                        /> Male
+                      </label>
+                      <label className="walkin-radio-label">
+                        <input
+                          type="radio"
+                          name="gender"
+                          value="2"
+                          checked={newPatientForm.gender === '2'}
+                          onChange={(e) => setNewPatientForm({ ...newPatientForm, gender: e.target.value })}
+                        /> Female
+                      </label>
+                    </div>
+                  </div>
 
-                <label className="walkin-label">Phone Number</label>
-                <input
-                  type="text"
-                  className="walkin-input"
-                  placeholder="07X XXX XXXX"
-                  value={newPatientForm.phone}
-                  onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
-                />
+                  <div className="walkin-form-group">
+                    <label className="walkin-label">Date of Birth</label>
+                    <input
+                      type="date"
+                      className="walkin-input"
+                      style={{ marginBottom: 0 }}
+                      value={newPatientForm.birth_date}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, birth_date: e.target.value })}
+                    />
+                  </div>
 
-                <label className="walkin-label">NIC / ID Number</label>
-                <input
-                  type="text"
-                  className="walkin-input"
-                  placeholder="NIC number"
-                  value={newPatientForm.id_number}
-                  onChange={(e) => setNewPatientForm({ ...newPatientForm, id_number: e.target.value })}
-                />
+                  <div className="walkin-form-group">
+                    <label className="walkin-label">Phone Number</label>
+                    <input
+                      type="text"
+                      className="walkin-input"
+                      style={{ marginBottom: 0 }}
+                      placeholder="07X XXX XXXX"
+                      value={newPatientForm.phone}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
+                    />
+                  </div>
 
-                <label className="walkin-label">Common Details / Initial Notes</label>
-                <input
-                  type="text"
-                  className="walkin-input"
-                  placeholder="Known conditions or notes..."
-                  value={newPatientForm.common}
-                  onChange={(e) => setNewPatientForm({ ...newPatientForm, common: e.target.value })}
-                />
+                  <div className="walkin-form-group">
+                    <label className="walkin-label">NIC / ID Number</label>
+                    <input
+                      type="text"
+                      className="walkin-input"
+                      style={{ marginBottom: 0 }}
+                      placeholder="NIC number"
+                      value={newPatientForm.id_number}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, id_number: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="walkin-form-group">
+                    <label className="walkin-label">Weight (kg)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      className="walkin-input"
+                      style={{ marginBottom: 0 }}
+                      placeholder="e.g., 65.5"
+                      value={newPatientForm.weight}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, weight: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="walkin-form-group">
+                    <label className="walkin-label">Height (cm)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      className="walkin-input"
+                      style={{ marginBottom: 0 }}
+                      placeholder="e.g., 170"
+                      value={newPatientForm.height}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, height: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="walkin-form-group full-width">
+                    <label className="walkin-label">Married?</label>
+                    <div className="walkin-radio-wrap" style={{ gap: '24px' }}>
+                      <label className="walkin-radio-label">
+                        <input
+                          type="radio"
+                          name="married"
+                          value="0"
+                          checked={newPatientForm.married === '0'}
+                          onChange={(e) => setNewPatientForm({ ...newPatientForm, married: e.target.value })}
+                        /> No / Single
+                      </label>
+                      <label className="walkin-radio-label">
+                        <input
+                          type="radio"
+                          name="married"
+                          value="1"
+                          checked={newPatientForm.married === '1'}
+                          onChange={(e) => setNewPatientForm({ ...newPatientForm, married: e.target.value })}
+                        /> Yes / Married
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="walkin-form-group full-width">
+                    <label className="walkin-label">Common Details / Medical Notes</label>
+                    <input
+                      type="text"
+                      className="walkin-input"
+                      style={{ marginBottom: 0 }}
+                      placeholder="Initial medical notes..."
+                      value={newPatientForm.common}
+                      onChange={(e) => setNewPatientForm({ ...newPatientForm, common: e.target.value })}
+                    />
+                  </div>
+                </div>
 
                 <button type="submit" disabled={creatingPatient} className="walkin-submit-btn">
-                  {creatingPatient ? 'Saving Patient...' : 'Save & Open Patient'}
+                  {creatingPatient ? 'Saving...' : 'Save & Open Patient'}
                 </button>
               </form>
             )}

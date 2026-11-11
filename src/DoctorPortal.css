@@ -574,13 +574,62 @@
   min-width: 0;
 }
 
+/* Fix for Pixelated Patient Name Font */
 .patient-item-name {
-  font-size: 1rem;
-  font-weight: 800;
+  font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: #0f172a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ================= 2-COLUMN WALK-IN REGISTRATION FORM ================= */
+.walkin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.walkin-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.walkin-form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.walkin-radio-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 0 12px;
+  height: 43px; /* Matches input height */
+}
+
+.walkin-radio-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.walkin-radio-label input[type="radio"] {
+  accent-color: var(--theme-primary);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
 .patient-item-sub {
