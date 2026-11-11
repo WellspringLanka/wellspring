@@ -304,7 +304,7 @@
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
 }
 
-/* Aesthetic Bell Button */
+/* Aesthetic Bell Button & Cooldown Fix */
 .bell-trigger-btn {
   display: inline-flex;
   align-items: center;
@@ -319,7 +319,9 @@
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
   transition: all 0.2s ease;
+  position: relative;
   overflow: hidden;
+  transform: translateZ(0); /* FIX: Forces browser to clip the animation inside the button */
 }
 
 .bell-trigger-btn > svg, 
@@ -327,6 +329,7 @@
   position: relative;
   z-index: 2; /* Keeps icon/text above the dark overlay */
 }
+
 .bell-trigger-btn:hover:not(.on-cooldown) {
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(217, 119, 6, 0.5);
@@ -344,9 +347,11 @@
   top: 0; 
   left: 0; 
   bottom: 0;
+  height: 100%;
   background: rgba(0, 0, 0, 0.25);
   z-index: 1;
-  animation: fillLeftToRight 3s linear forwards; /* Matches 3000ms cooldown logic */
+  border-radius: inherit;
+  animation: fillLeftToRight 3s linear forwards;
 }
 
 @keyframes fillLeftToRight {
