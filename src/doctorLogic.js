@@ -3,6 +3,14 @@ import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+// 4 Curated Medical Themes for the Top-Right Color Selector
+export const DOCTOR_THEMES = [
+  { id: 'ocean', name: 'Ocean Medical Blue', swatch: '#0284c7' },
+  { id: 'navy', name: 'Royal Hospital Navy', swatch: '#1e3a8a' },
+  { id: 'teal', name: 'Clinical Teal', swatch: '#0f766e' },
+  { id: 'indigo', name: 'Modern Slate Indigo', swatch: '#3730a3' }
+];
+
 // Calculate patient age from birth_date
 export function calculateAge(birthDateString) {
   if (!birthDateString) return 'Not Recorded';
@@ -24,7 +32,7 @@ export function calculateAge(birthDateString) {
   return `${years} Years`;
 }
 
-// Format date cleanly (e.g., 11 Nov 2026)
+// Format date cleanly (e.g., 12 Nov 2026)
 export function formatClearDate(dateString) {
   if (!dateString) return 'Not Recorded';
   const date = new Date(dateString);
@@ -37,6 +45,15 @@ export function formatClearDate(dateString) {
 }
 
 export function useDoctorPortalLogic() {
+  // Theme Color Selector State (4 colors in top-right corner)
+  const [activeTheme, setActiveTheme] = useState(() => {
+    return localStorage.getItem('wellspring_doc_theme') || 'ocean';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('wellspring_doc_theme', activeTheme);
+  }, [activeTheme]);
+
   // 1. Doctor Authentication State (Isolated per browser tab via sessionStorage)
   const [loggedInDoctor, setLoggedInDoctor] = useState(() => {
     const saved = sessionStorage.getItem('wellspring_doctor_session');
@@ -86,7 +103,7 @@ export function useDoctorPortalLogic() {
   const [isEditingAllergies, setIsEditingAllergies] = useState(false);
   const [savingAllergies, setSavingAllergies] = useState(false);
 
-  // Right Panel: "To Counter" Prescription State
+  // Right Panel: "To Counter" Prescription & Doctor's Visit Remarks
   const [prescriptionText, setPrescriptionText] = useState(() => {
     return sessionStorage.getItem('draft_rx_general') || '';
   });
@@ -295,7 +312,7 @@ export function useDoctorPortalLogic() {
     }
   };
 
-  // Submit Prescription ("To Counter" -> channeling_master.general)
+  // Submit Prescription ("To Counter" -> channeling_master.general & reason_remarks)
   const handleSubmitPrescription = async (e) => {
     if (e) e.preventDefault();
     if (!selectedPatient || !loggedInDoctor) {
@@ -342,7 +359,7 @@ export function useDoctorPortalLogic() {
         doctor_id: loggedInDoctor.id,
         doctor_name: loggedInDoctor.name
       });
-      showToast('Counter bell rung.');
+      showToast('Counter bell rung!');
     } catch (err) {
       showToast('Failed to ring counter bell.', 'error');
     } finally {
@@ -351,6 +368,8 @@ export function useDoctorPortalLogic() {
   };
 
   return {
+    activeTheme,
+    setActiveTheme,
     loggedInDoctor,
     loginUsername,
     setLoginUsername,

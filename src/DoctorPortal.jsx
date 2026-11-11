@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import {
   useDoctorPortalLogic,
+  DOCTOR_THEMES,
   calculateAge,
   formatClearDate
 } from './doctorLogic';
@@ -8,6 +9,8 @@ import './DoctorPortal.css';
 
 export default function DoctorPortal() {
   const {
+    activeTheme,
+    setActiveTheme,
     loggedInDoctor,
     loginUsername,
     setLoginUsername,
@@ -34,7 +37,6 @@ export default function DoctorPortal() {
     creatingPatient,
     handleCreateWalkInPatient,
     selectedPatient,
-    activeTicketId,
     loadingProfile,
     selectPatientForConsultation,
     commonText,
@@ -67,9 +69,10 @@ export default function DoctorPortal() {
       <div className="doctor-login-wrapper">
         <div className="login-card">
           <div className="login-header">
-            <span className="login-badge">Wellspring Health Care</span>
-            <h1>Doctor Consultation Portal</h1>
-            <p>Sign in with your medical staff credentials</p>
+            <div className="login-brand-script">Wellspring</div>
+            <span className="login-badge">Doctor Console</span>
+            <h1>Physician Sign In</h1>
+            <p>Enter your clinical credentials to access patient consultations</p>
           </div>
 
           {loginError && <div className="login-error-msg">{loginError}</div>}
@@ -101,7 +104,7 @@ export default function DoctorPortal() {
             </div>
 
             <button type="submit" disabled={loggingIn} className="login-submit-btn">
-              {loggingIn ? 'Signing In...' : 'Sign In to Portal'}
+              {loggingIn ? 'Signing In...' : 'Sign In to Console'}
             </button>
           </form>
 
@@ -115,12 +118,12 @@ export default function DoctorPortal() {
 
   // ================= 2. MAIN CONSULTATION INTERFACE =================
   return (
-    <div className="doctor-portal-wrapper">
-      {/* TOP HEADER BAR */}
+    <div className={`doctor-portal-wrapper theme-${activeTheme}`}>
+      {/* TOP COLORED HEADER BAR */}
       <header className="doc-topbar">
         <div className="doc-topbar-left">
           <Link to="/" className="doc-back-btn">
-            ← Main Menu
+            ← Home
           </Link>
 
           <div className="topbar-divider"></div>
@@ -131,19 +134,33 @@ export default function DoctorPortal() {
           </div>
         </div>
 
-        {/* TOP RIGHT: COUNTER BELL & SIGN OUT */}
+        {/* TOP RIGHT: 4-COLOR THEME PICKER, AESTHETIC BELL & RED SIGN OUT */}
         <div className="doc-topbar-right">
+          <div className="theme-picker-group" title="Choose Portal Color Theme">
+            <span className="theme-picker-label">Theme</span>
+            {DOCTOR_THEMES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className={`theme-swatch-btn ${activeTheme === t.id ? 'active' : ''}`}
+                style={{ backgroundColor: t.swatch }}
+                onClick={() => setActiveTheme(t.id)}
+                title={t.name}
+              />
+            ))}
+          </div>
+
           <button
             type="button"
             onClick={handleRingCounterBell}
             className={`bell-trigger-btn ${bellRinging ? 'ringing' : ''}`}
-            title="Ring alert bell at the Counter"
+            title="Ring the alert bell at the Counter"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
-            <span>{bellRinging ? 'Ringing...' : 'Call Counter'}</span>
+            <span>{bellRinging ? 'Ringing Counter...' : 'Ring Counter'}</span>
           </button>
 
           <button type="button" onClick={handleDoctorLogout} className="doc-logout-btn">
@@ -159,29 +176,40 @@ export default function DoctorPortal() {
         </div>
       )}
 
-      {/* FULL-SCREEN 3-COLUMN WORKSPACE */}
+      {/* 3-SECTION WORKSPACE WITH EDGE SPACING */}
       <div className="doc-workspace-grid">
         
-        {/* LEFT SIDEBAR: ACTIVE QUEUE, SEARCH & WALK-IN */}
+        {/* 1. LEFT SIDEBAR: BRAND BANNER + 3 SEPARATE BUTTONS + LIST */}
         <aside className="doc-sidebar-card">
-          <div className="sidebar-mode-tabs">
+          {/* Rectangular Top Area with Photo Overlay, DOCTOR CONSOLE pill, and Tangerine Wellspring */}
+          <div className="sidebar-brand-banner">
+            <div className="sidebar-banner-photo"></div>
+            <div className="sidebar-banner-tint"></div>
+            <div className="sidebar-banner-content">
+              <span className="doctor-console-pill">Doctor Console</span>
+              <div className="sidebar-wellspring-script">Wellspring</div>
+            </div>
+          </div>
+
+          {/* 3 Visually Separate Rounded Buttons */}
+          <div className="sidebar-separate-tabs">
             <button
               type="button"
-              className={`sidebar-tab-btn ${sidebarTab === 'queue' ? 'active' : ''}`}
+              className={`sidebar-pill-btn ${sidebarTab === 'queue' ? 'active' : ''}`}
               onClick={() => setSidebarTab('queue')}
             >
               Queue ({queueList.length})
             </button>
             <button
               type="button"
-              className={`sidebar-tab-btn ${sidebarTab === 'search' ? 'active' : ''}`}
+              className={`sidebar-pill-btn ${sidebarTab === 'search' ? 'active' : ''}`}
               onClick={() => setSidebarTab('search')}
             >
               Find Patient
             </button>
             <button
               type="button"
-              className={`sidebar-tab-btn ${sidebarTab === 'add' ? 'active' : ''}`}
+              className={`sidebar-pill-btn ${sidebarTab === 'add' ? 'active' : ''}`}
               onClick={() => setSidebarTab('add')}
             >
               + New Patient
@@ -189,22 +217,22 @@ export default function DoctorPortal() {
           </div>
 
           <div className="sidebar-body">
-            {/* TAB A: ACTIVE QUEUE */}
+            {/* TAB A: ACTIVE QUEUE (Ordered by First Arrival) */}
             {sidebarTab === 'queue' && (
               <div>
                 <div className="queue-header-row">
-                  <span className="queue-count-pill">{queueList.length} Waiting</span>
+                  <span className="queue-count-pill">{queueList.length} in Queue</span>
                   <button type="button" onClick={fetchQueue} className="refresh-mini-btn">
-                    {loadingQueue ? 'Loading...' : 'Refresh'}
+                    {loadingQueue ? 'Loading...' : '↻ Refresh'}
                   </button>
                 </div>
 
                 {queueList.length === 0 ? (
-                  <p style={{ color: '#64748b', textAlign: 'center', padding: '32px 12px', fontSize: '0.875rem', lineHeight: '1.5' }}>
-                    No patients currently waiting in the queue. Use <strong>Find Patient</strong> or <strong>+ New Patient</strong> for direct walk-in consultations.
+                  <p style={{ color: '#64748b', textAlign: 'center', padding: '36px 14px', fontSize: '0.92rem', lineHeight: '1.6', fontWeight: 500 }}>
+                    No patients waiting in the active queue. Use <strong>Find Patient</strong> or <strong>+ New Patient</strong> for direct walk-in consultations.
                   </p>
                 ) : (
-                  queueList.map((item) => (
+                  queueList.map((item, index) => (
                     <button
                       key={item.ticket_id}
                       type="button"
@@ -219,7 +247,9 @@ export default function DoctorPortal() {
                           {calculateAge(item.patient.birth_date)} • {item.patient.phone || 'No Phone'}
                         </div>
                       </div>
-                      <span className="ticket-num-badge">#{item.ticket_number}</span>
+                      <span className="queue-order-badge" title="Arrival Queue Order">
+                        Queue #{index + 1}
+                      </span>
                     </button>
                   ))
                 )}
@@ -232,14 +262,14 @@ export default function DoctorPortal() {
                 <input
                   type="text"
                   className="sidebar-search-input"
-                  placeholder="Search by Name, Phone, NIC, or Notes..."
+                  placeholder="Search Name, Phone, NIC, or Notes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
 
                 {searching && (
-                  <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '10px' }}>
-                    Searching records...
+                  <p style={{ color: '#475569', fontSize: '0.88rem', fontWeight: 600, marginBottom: '10px' }}>
+                    Searching patient database...
                   </p>
                 )}
 
@@ -258,7 +288,7 @@ export default function DoctorPortal() {
                         DOB: {formatClearDate(pat.birth_date)} ({calculateAge(pat.birth_date)})
                       </div>
                       <div className="patient-item-sub">
-                        Tel: {pat.phone || 'N/A'} • ID: {pat.id_number || pat.id}
+                        Tel: {pat.phone || 'N/A'} {pat.id_number ? `• NIC: ${pat.id_number}` : ''}
                       </div>
                     </div>
                   </button>
@@ -271,7 +301,7 @@ export default function DoctorPortal() {
                     className="walkin-submit-btn"
                     style={{ marginTop: '8px' }}
                   >
-                    Load More
+                    Load More Results
                   </button>
                 )}
               </div>
@@ -280,12 +310,12 @@ export default function DoctorPortal() {
             {/* TAB C: DIRECT WALK-IN PATIENT REGISTRATION */}
             {sidebarTab === 'add' && (
               <form onSubmit={handleCreateWalkInPatient}>
-                <label className="walkin-label">Full Name *</label>
+                <label className="walkin-label">Patient Full Name *</label>
                 <input
                   type="text"
                   required
                   className="walkin-input"
-                  placeholder="Patient full name"
+                  placeholder="Enter full name"
                   value={newPatientForm.name}
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, name: e.target.value })}
                 />
@@ -316,48 +346,52 @@ export default function DoctorPortal() {
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, id_number: e.target.value })}
                 />
 
-                <label className="walkin-label">Common Details / Medical Notes</label>
+                <label className="walkin-label">Common Details / Initial Notes</label>
                 <input
                   type="text"
                   className="walkin-input"
-                  placeholder="Initial medical notes..."
+                  placeholder="Known conditions or notes..."
                   value={newPatientForm.common}
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, common: e.target.value })}
                 />
 
                 <button type="submit" disabled={creatingPatient} className="walkin-submit-btn">
-                  {creatingPatient ? 'Saving...' : 'Save & Open Patient'}
+                  {creatingPatient ? 'Saving Patient...' : 'Save & Open Patient'}
                 </button>
               </form>
             )}
           </div>
         </aside>
 
-        {/* MIDDLE SECTION: STACKED PATIENT DETAILS */}
+        {/* 2. MIDDLE SECTION: PATIENT CLINICAL PROFILE */}
         <main className="doc-middle-card">
+          <div className="section-card-header">
+            <h2 className="section-card-title">Patient Clinical Profile</h2>
+            <span className="section-card-tag">Medical Record</span>
+          </div>
+
           {!selectedPatient ? (
             <div className="empty-patient-state">
               <h2>No Patient Selected</h2>
               <p>
-                Select a patient from the active queue on the left, or use Find Patient to look up an existing record.
+                Choose a patient from the <strong>Queue</strong> on the left, or use <strong>Find Patient</strong> to view any patient record.
               </p>
             </div>
           ) : loadingProfile ? (
             <div className="empty-patient-state">
-              <p>Loading patient record...</p>
+              <p>Loading patient clinical profile...</p>
             </div>
           ) : (
             <div className="stacked-details-list">
-              {/* 1. PATIENT NAME */}
+              {/* 1. PATIENT NAME (Removed confusing raw #ticket number) */}
               <div className="stacked-field-block">
-                <span className="stacked-field-label">
-                  Patient Name {activeTicketId ? `• Ticket #${activeTicketId}` : '• Direct Walk-In'}
-                </span>
+                <span className="stacked-field-label">Patient Name</span>
                 <div className="stacked-field-value-primary">
                   {selectedPatient.name}
                 </div>
                 <div className="stacked-field-meta">
-                  Patient ID: #{selectedPatient.id} {selectedPatient.phone ? `• Phone: ${selectedPatient.phone}` : ''}
+                  {selectedPatient.phone ? `Phone: ${selectedPatient.phone}` : 'No Phone Recorded'}
+                  {selectedPatient.id_number ? ` • NIC: ${selectedPatient.id_number}` : ''}
                 </div>
               </div>
 
@@ -377,7 +411,7 @@ export default function DoctorPortal() {
                 </div>
               </div>
 
-              {/* 4. COMMON DETAILS ABOUT PATIENT */}
+              {/* 4. COMMON DETAILS ABOUT PATIENT (patients_master.common) */}
               <div className="stacked-field-block">
                 <div className="editable-header-row">
                   <span className="stacked-field-label">Common Details About Patient</span>
@@ -407,7 +441,7 @@ export default function DoctorPortal() {
                     {commonText ? (
                       commonText
                     ) : (
-                      <span className="clinical-placeholder">No common details recorded.</span>
+                      <span className="clinical-placeholder">No common details recorded. Click Edit to add.</span>
                     )}
                   </div>
                 ) : (
@@ -415,13 +449,13 @@ export default function DoctorPortal() {
                     className="clinical-edit-textarea"
                     value={commonText}
                     onChange={(e) => setCommonText(e.target.value)}
-                    placeholder="Enter general patient details or chronic conditions..."
+                    placeholder="Enter general patient details or long-term history..."
                     autoFocus
                   />
                 )}
               </div>
 
-              {/* 5. ALLERGIES AND REPORTS */}
+              {/* 5. ALLERGIES AND REPORTS (channeling_findings_master.findings_comment) */}
               <div className="stacked-field-block">
                 <div className="editable-header-row">
                   <span className="stacked-field-label">Allergies and Reports</span>
@@ -451,7 +485,7 @@ export default function DoctorPortal() {
                     {allergiesText ? (
                       allergiesText
                     ) : (
-                      <span className="clinical-placeholder">No allergies or report findings recorded.</span>
+                      <span className="clinical-placeholder">No allergies or lab report findings recorded. Click Edit to add.</span>
                     )}
                   </div>
                 ) : (
@@ -459,7 +493,7 @@ export default function DoctorPortal() {
                     className="clinical-edit-textarea"
                     value={allergiesText}
                     onChange={(e) => setAllergiesText(e.target.value)}
-                    placeholder="Enter drug allergies, investigation results, and clinical findings..."
+                    placeholder="Enter drug allergies, lab investigation results, and clinical findings..."
                     autoFocus
                   />
                 )}
@@ -468,19 +502,21 @@ export default function DoctorPortal() {
           )}
         </main>
 
-        {/* RIGHT SECTION: "TO COUNTER" PRESCRIPTION PANEL */}
+        {/* 3. WIDER RIGHT SECTION: "TO COUNTER" PRESCRIPTION & DOCTOR VISIT REMARKS */}
         <aside className="doc-counter-handoff-card">
           <div className="to-counter-header">
             <h2 className="to-counter-title">To Counter</h2>
-            <span className="live-handoff-tag">Dispensary Handoff</span>
+            <span className="live-handoff-tag">Dispensary Dispatch</span>
           </div>
 
           <form onSubmit={handleSubmitPrescription}>
             <div className="counter-form-group">
-              <label className="counter-form-label">Prescription</label>
+              <label className="counter-form-label">
+                Prescription Medicines *
+              </label>
               <textarea
                 className="rx-shorthand-textarea"
-                placeholder="Enter prescription for the Counter (e.g., dom, cinn, ome)..."
+                placeholder="Type prescription for Counter (e.g., dom, cinn, ome, beta his)..."
                 value={prescriptionText}
                 onChange={(e) => setPrescriptionText(e.target.value)}
                 disabled={!selectedPatient}
@@ -488,11 +524,15 @@ export default function DoctorPortal() {
             </div>
 
             <div className="counter-form-group">
-              <label className="counter-form-label">Special Remarks (Optional)</label>
-              <input
-                type="text"
-                className="rx-remarks-input"
-                placeholder="Additional instructions for Counter..."
+              <label className="counter-form-label">
+                Doctor&apos;s Visit Remarks (Optional)
+              </label>
+              <span className="counter-db-sub">
+                Saved to patient consultation history (channeling_master.reason_remarks)
+              </span>
+              <textarea
+                className="rx-remarks-textarea"
+                placeholder="Optional clinical remarks or diagnosis notes for this visit..."
                 value={remarksText}
                 onChange={(e) => setRemarksText(e.target.value)}
                 disabled={!selectedPatient}
@@ -504,63 +544,85 @@ export default function DoctorPortal() {
               disabled={!selectedPatient || submittingRx}
               className="submit-counter-btn"
             >
-              {submittingRx ? 'Sending...' : 'Submit to Counter'}
+              {submittingRx ? 'SENDING TO COUNTER...' : 'SUBMIT TO COUNTER'}
             </button>
           </form>
         </aside>
       </div>
 
-      {/* BOTTOM SECTION: PAST PRESCRIPTION LOG */}
+      {/* 4. BOTTOM SECTION: 4-COLUMN PRESCRIPTION & REMARKS LOG */}
       <section className="doc-history-section">
         <div className="doc-history-card">
           <div className="history-title-bar">
             <h2>
-              Prescription History {selectedPatient ? `— ${selectedPatient.name}` : ''}
+              Consultation &amp; Prescription Log {selectedPatient ? `— ${selectedPatient.name}` : ''}
             </h2>
             <span className="history-count-label">
-              {prescriptionHistory.length} Records
+              {prescriptionHistory.length} Past Visits
             </span>
           </div>
 
           {!selectedPatient ? (
-            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
-              Select a patient to view past prescriptions.
+            <p style={{ color: '#64748b', fontSize: '0.98rem', fontWeight: 500 }}>
+              Select a patient above to view their historical prescriptions and visit remarks.
             </p>
           ) : prescriptionHistory.length === 0 ? (
-            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
-              No previous prescription records found for this patient.
+            <p style={{ color: '#64748b', fontSize: '0.98rem', fontWeight: 500 }}>
+              No previous consultation records found for this patient.
             </p>
           ) : (
-            <div className="history-log-list">
-              {prescriptionHistory.map((item) => (
-                <div key={item.id} className="history-log-item">
-                  <div className="history-date-badge">
-                    <span className="history-date-main">
-                      {formatClearDate(item.visit_date)}
-                    </span>
-                    <span className="history-ticket-sub">
-                      Ticket #{item.ticket_id}
-                    </span>
-                  </div>
+            <div>
+              {/* 4-Column Header */}
+              <div className="history-grid-header">
+                <div>Visit Date</div>
+                <div>Prescription (channeling_master.general)</div>
+                <div>Doctor&apos;s Remarks (reason_remarks)</div>
+                <div style={{ textAlign: 'center' }}>Quick Action</div>
+              </div>
 
-                  <div className="history-rx-body">
-                    <div className="history-rx-content">{item.general}</div>
-                    {item.reason_remarks && (
-                      <div className="history-remarks-sub">
-                        Remarks: {item.reason_remarks}
-                      </div>
-                    )}
-                  </div>
+              <div className="history-log-list">
+                {prescriptionHistory.map((item) => (
+                  <div key={item.id} className="history-log-item">
+                    {/* COLUMN 1: DATE */}
+                    <div className="history-date-col">
+                      <span className="history-date-main">
+                        {formatClearDate(item.visit_date)}
+                      </span>
+                      <span className="history-date-sub">
+                        Recorded Visit
+                      </span>
+                    </div>
 
-                  <button
-                    type="button"
-                    className="repeat-rx-btn"
-                    onClick={() => setPrescriptionText(item.general)}
-                  >
-                    Copy to Prescription
-                  </button>
-                </div>
-              ))}
+                    {/* COLUMN 2: PRESCRIPTION */}
+                    <div className="history-rx-col">
+                      {item.general}
+                    </div>
+
+                    {/* COLUMN 3: REMARKS */}
+                    <div className="history-remarks-col">
+                      {item.reason_remarks ? (
+                        item.reason_remarks
+                      ) : (
+                        <span className="history-remarks-empty">No remarks recorded</span>
+                      )}
+                    </div>
+
+                    {/* COLUMN 4: COPY BUTTON */}
+                    <div>
+                      <button
+                        type="button"
+                        className="repeat-rx-btn"
+                        onClick={() => {
+                          setPrescriptionText(item.general);
+                          if (item.reason_remarks) setRemarksText(item.reason_remarks);
+                        }}
+                      >
+                        Copy to Today
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
