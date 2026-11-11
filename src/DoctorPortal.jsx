@@ -8,6 +8,7 @@ import {
 import './DoctorPortal.css';
 
 export default function DoctorPortal() {
+  // CORRECTED: Added advancedSearch, setAdvancedSearch, and bellCooldown here
   const {
     activeTheme,
     setActiveTheme,
@@ -25,8 +26,8 @@ export default function DoctorPortal() {
     queueList,
     loadingQueue,
     fetchQueue,
-    searchQuery,
-    setSearchQuery,
+    advancedSearch,
+    setAdvancedSearch,
     searchResults,
     searchPage,
     hasMoreSearch,
@@ -37,6 +38,7 @@ export default function DoctorPortal() {
     creatingPatient,
     handleCreateWalkInPatient,
     selectedPatient,
+    activeTicketId,
     loadingProfile,
     selectPatientForConsultation,
     commonText,
@@ -58,7 +60,7 @@ export default function DoctorPortal() {
     submittingRx,
     handleSubmitPrescription,
     prescriptionHistory,
-    bellRinging,
+    bellCooldown,
     handleRingCounterBell,
     statusBanner
   } = useDoctorPortalLogic();
@@ -134,7 +136,7 @@ export default function DoctorPortal() {
           </div>
         </div>
 
-        {/* TOP RIGHT: 4-COLOR THEME PICKER, AESTHETIC BELL & RED SIGN OUT */}
+        {/* TOP RIGHT: 4-COLOR THEME PICKER, CLASSY BELL & RED SIGN OUT */}
         <div className="doc-topbar-right">
           <div className="theme-picker-group" title="Choose Portal Color Theme">
             <span className="theme-picker-label">Theme</span>
@@ -153,14 +155,15 @@ export default function DoctorPortal() {
           <button
             type="button"
             onClick={handleRingCounterBell}
-            className={`bell-trigger-btn ${bellRinging ? 'ringing' : ''}`}
+            className={`bell-trigger-btn ${bellCooldown ? 'on-cooldown' : ''}`}
+            disabled={bellCooldown}
             title="Ring the alert bell at the Counter"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
-            <span>{bellRinging ? 'Ringing Counter...' : 'Ring Counter'}</span>
+            <span>{bellCooldown ? 'Waiting...' : 'Ring Counter'}</span>
           </button>
 
           <button type="button" onClick={handleDoctorLogout} className="doc-logout-btn">
@@ -181,7 +184,6 @@ export default function DoctorPortal() {
         
         {/* 1. LEFT SIDEBAR: BRAND BANNER + 3 SEPARATE BUTTONS + LIST */}
         <aside className="doc-sidebar-card">
-          {/* Rectangular Top Area with Photo Overlay, DOCTOR CONSOLE pill, and Tangerine Wellspring */}
           <div className="sidebar-brand-banner">
             <div className="sidebar-banner-photo"></div>
             <div className="sidebar-banner-tint"></div>
@@ -191,7 +193,6 @@ export default function DoctorPortal() {
             </div>
           </div>
 
-          {/* 3 Visually Separate Rounded Buttons */}
           <div className="sidebar-separate-tabs">
             <button
               type="button"
@@ -217,7 +218,7 @@ export default function DoctorPortal() {
           </div>
 
           <div className="sidebar-body">
-            {/* TAB A: ACTIVE QUEUE (Ordered by First Arrival) */}
+            {/* TAB A: ACTIVE QUEUE */}
             {sidebarTab === 'queue' && (
               <div>
                 <div className="queue-header-row">
@@ -256,20 +257,61 @@ export default function DoctorPortal() {
               </div>
             )}
 
-            {/* TAB B: DIRECT PATIENT SEARCH */}
+            {/* TAB B: DIRECT ADVANCED PATIENT SEARCH */}
             {sidebarTab === 'search' && (
               <div>
-                <input
-                  type="text"
-                  className="sidebar-search-input"
-                  placeholder="Search Name, Phone, NIC, or Notes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                <div className="advanced-search-grid">
+                  <div className="walkin-form-group full-width">
+                    <label className="walkin-label">Patient Name</label>
+                    <input
+                      type="text"
+                      className="sidebar-search-input"
+                      style={{ marginBottom: 0 }}
+                      placeholder="e.g., Priyantha"
+                      value={advancedSearch.name}
+                      onChange={(e) => setAdvancedSearch({ ...advancedSearch, name: e.target.value })}
+                    />
+                  </div>
+                  
+                  <div className="walkin-form-group">
+                    <label className="walkin-label">NIC Number</label>
+                    <input
+                      type="text"
+                      className="sidebar-search-input"
+                      style={{ marginBottom: 0 }}
+                      placeholder="ID Number"
+                      value={advancedSearch.nic}
+                      onChange={(e) => setAdvancedSearch({ ...advancedSearch, nic: e.target.value })}
+                    />
+                  </div>
+                  
+                  <div className="walkin-form-group">
+                    <label className="walkin-label">Phone</label>
+                    <input
+                      type="text"
+                      className="sidebar-search-input"
+                      style={{ marginBottom: 0 }}
+                      placeholder="07X..."
+                      value={advancedSearch.phone}
+                      onChange={(e) => setAdvancedSearch({ ...advancedSearch, phone: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="walkin-form-group full-width">
+                    <label className="walkin-label">Date of Birth (Exact Date)</label>
+                    <input
+                      type="date"
+                      className="sidebar-search-input"
+                      style={{ marginBottom: 0 }}
+                      value={advancedSearch.dob}
+                      onChange={(e) => setAdvancedSearch({ ...advancedSearch, dob: e.target.value })}
+                    />
+                  </div>
+                </div>
 
                 {searching && (
                   <p style={{ color: '#475569', fontSize: '0.88rem', fontWeight: 600, marginBottom: '10px' }}>
-                    Searching patient database...
+                    Filtering patient database...
                   </p>
                 )}
 
@@ -474,19 +516,19 @@ export default function DoctorPortal() {
             </div>
           ) : (
             <div className="stacked-details-list">
-              {/* 1. PATIENT NAME (Removed confusing raw #ticket number) */}
               <div className="stacked-field-block">
-                <span className="stacked-field-label">Patient Name</span>
+                <span className="stacked-field-label">
+                  Patient Name {activeTicketId ? `• Ticket #${activeTicketId}` : '• Direct Walk-In'}
+                </span>
                 <div className="stacked-field-value-primary">
                   {selectedPatient.name}
                 </div>
                 <div className="stacked-field-meta">
-                  {selectedPatient.phone ? `Phone: ${selectedPatient.phone}` : 'No Phone Recorded'}
+                  Patient ID: #{selectedPatient.id} {selectedPatient.phone ? `• Phone: ${selectedPatient.phone}` : ''}
                   {selectedPatient.id_number ? ` • NIC: ${selectedPatient.id_number}` : ''}
                 </div>
               </div>
 
-              {/* 2. AGE */}
               <div className="stacked-field-block">
                 <span className="stacked-field-label">Age</span>
                 <div className="stacked-field-value">
@@ -494,7 +536,6 @@ export default function DoctorPortal() {
                 </div>
               </div>
 
-              {/* 3. BIRTHDAY */}
               <div className="stacked-field-block">
                 <span className="stacked-field-label">Date of Birth</span>
                 <div className="stacked-field-value">
@@ -502,7 +543,6 @@ export default function DoctorPortal() {
                 </div>
               </div>
 
-              {/* 4. COMMON DETAILS ABOUT PATIENT (patients_master.common) */}
               <div className="stacked-field-block">
                 <div className="editable-header-row">
                   <span className="stacked-field-label">Common Details About Patient</span>
@@ -546,7 +586,6 @@ export default function DoctorPortal() {
                 )}
               </div>
 
-              {/* 5. ALLERGIES AND REPORTS (channeling_findings_master.findings_comment) */}
               <div className="stacked-field-block">
                 <div className="editable-header-row">
                   <span className="stacked-field-label">Allergies and Reports</span>
@@ -593,7 +632,7 @@ export default function DoctorPortal() {
           )}
         </main>
 
-        {/* 3. WIDER RIGHT SECTION: "TO COUNTER" PRESCRIPTION & DOCTOR VISIT REMARKS */}
+        {/* 3. RIGHT SECTION: "TO COUNTER" PRESCRIPTION PANEL */}
         <aside className="doc-counter-handoff-card">
           <div className="to-counter-header">
             <h2 className="to-counter-title">To Counter</h2>
@@ -641,7 +680,7 @@ export default function DoctorPortal() {
         </aside>
       </div>
 
-      {/* 4. BOTTOM SECTION: 4-COLUMN PRESCRIPTION & REMARKS LOG */}
+      {/* 4. BOTTOM SECTION: 4-COLUMN PRESCRIPTION LOG */}
       <section className="doc-history-section">
         <div className="doc-history-card">
           <div className="history-title-bar">
@@ -663,7 +702,6 @@ export default function DoctorPortal() {
             </p>
           ) : (
             <div>
-              {/* 4-Column Header */}
               <div className="history-grid-header">
                 <div>Visit Date</div>
                 <div>Prescription (channeling_master.general)</div>
@@ -674,7 +712,6 @@ export default function DoctorPortal() {
               <div className="history-log-list">
                 {prescriptionHistory.map((item) => (
                   <div key={item.id} className="history-log-item">
-                    {/* COLUMN 1: DATE */}
                     <div className="history-date-col">
                       <span className="history-date-main">
                         {formatClearDate(item.visit_date)}
@@ -684,12 +721,10 @@ export default function DoctorPortal() {
                       </span>
                     </div>
 
-                    {/* COLUMN 2: PRESCRIPTION */}
                     <div className="history-rx-col">
                       {item.general}
                     </div>
 
-                    {/* COLUMN 3: REMARKS */}
                     <div className="history-remarks-col">
                       {item.reason_remarks ? (
                         item.reason_remarks
@@ -698,7 +733,6 @@ export default function DoctorPortal() {
                       )}
                     </div>
 
-                    {/* COLUMN 4: COPY BUTTON */}
                     <div>
                       <button
                         type="button"

@@ -319,6 +319,39 @@
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
   transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.bell-trigger-btn > svg, 
+.bell-trigger-btn > span {
+  position: relative;
+  z-index: 2; /* Keeps icon/text above the dark overlay */
+}
+.bell-trigger-btn:hover:not(.on-cooldown) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(217, 119, 6, 0.5);
+}
+
+.bell-trigger-btn.on-cooldown {
+  cursor: not-allowed;
+  opacity: 0.8;
+  box-shadow: none;
+}
+
+.bell-trigger-btn.on-cooldown::before {
+  content: '';
+  position: absolute;
+  top: 0; 
+  left: 0; 
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 1;
+  animation: fillLeftToRight 3s linear forwards; /* Matches 3000ms cooldown logic */
+}
+
+@keyframes fillLeftToRight {
+  0% { width: 0%; }
+  100% { width: 100%; }
 }
 
 .bell-trigger-btn:hover {
@@ -382,9 +415,10 @@
   max-width: 1920px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 410px minmax(0, 1fr) 460px;
+  /* Increased from 410px to 440px */
+  grid-template-columns: 440px minmax(0, 1fr) 460px;
   gap: 26px;
-  padding: 28px 48px 22px 48px; /* Generous breathing space from both screen corners */
+  padding: 28px 48px 22px 48px; 
   align-items: start;
 }
 
@@ -448,7 +482,7 @@
   font-weight: 800;
   letter-spacing: 2px;
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 16px;
 }
 
 /* Big "Wellspring" Script Name in Sidebar Top Rectangle */
@@ -1159,4 +1193,15 @@
     border-bottom: 1px solid #e2e8f0;
     padding-bottom: 10px;
   }
+}
+
+/* Update 4: Advanced Search Form Grid */
+.advanced-search-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.advanced-search-grid .full-width {
+  grid-column: 1 / -1;
 }

@@ -14,19 +14,13 @@ export function calculateAge(birthDateString) {
   if (!birthDateString) return 'Not Recorded';
   const birth = new Date(birthDateString);
   if (isNaN(birth.getTime())) return 'Not Recorded';
-
   const today = new Date();
   let years = today.getFullYear() - birth.getFullYear();
   let months = today.getMonth() - birth.getMonth();
-
   if (months < 0 || (months === 0 && today.getDate() < birth.getDate())) {
-    years--;
-    months += 12;
+    years--; months += 12;
   }
-
-  if (years < 1) {
-    return `${Math.max(0, months)} Months`;
-  }
+  if (years < 1) return `${Math.max(0, months)} Months`;
   return `${years} Years`;
 }
 
@@ -34,22 +28,12 @@ export function formatClearDate(dateString) {
   if (!dateString) return 'Not Recorded';
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return dateString;
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 export function useDoctorPortalLogic() {
-  // Defaulting to "Clinical Teal" as requested
-  const [activeTheme, setActiveTheme] = useState(() => {
-    return localStorage.getItem('wellspring_doc_theme') || 'teal';
-  });
-
-  useEffect(() => {
-    localStorage.setItem('wellspring_doc_theme', activeTheme);
-  }, [activeTheme]);
+  const [activeTheme, setActiveTheme] = useState(() => localStorage.getItem('wellspring_doc_theme') || 'teal');
+  useEffect(() => { localStorage.setItem('wellspring_doc_theme', activeTheme); }, [activeTheme]);
 
   const [loggedInDoctor, setLoggedInDoctor] = useState(() => {
     const saved = sessionStorage.getItem('wellspring_doctor_session');
@@ -64,23 +48,15 @@ export function useDoctorPortalLogic() {
   const [queueList, setQueueList] = useState([]);
   const [loadingQueue, setLoadingQueue] = useState(false);
 
-  const [searchQuery, setSearchQuery] = useState('');
+  // Upgraded Advanced Search State
+  const [advancedSearch, setAdvancedSearch] = useState({ name: '', nic: '', phone: '', dob: '' });
   const [searchResults, setSearchResults] = useState([]);
   const [searchPage, setSearchPage] = useState(1);
   const [hasMoreSearch, setHasMoreSearch] = useState(false);
   const [searching, setSearching] = useState(false);
 
-  // Upgraded Patient Form State
   const [newPatientForm, setNewPatientForm] = useState({
-    name: '',
-    birth_date: '',
-    phone: '',
-    id_number: '',
-    gender: '1', // 1 = Male, 2 = Female
-    married: '0', // 0 = No, 1 = Yes
-    weight: '',
-    height: '',
-    common: ''
+    name: '', birth_date: '', phone: '', id_number: '', gender: '1', married: '0', weight: '', height: '', common: ''
   });
   const [creatingPatient, setCreatingPatient] = useState(false);
 
@@ -96,14 +72,13 @@ export function useDoctorPortalLogic() {
   const [isEditingAllergies, setIsEditingAllergies] = useState(false);
   const [savingAllergies, setSavingAllergies] = useState(false);
 
-  const [prescriptionText, setPrescriptionText] = useState(() => {
-    return sessionStorage.getItem('draft_rx_general') || '';
-  });
+  const [prescriptionText, setPrescriptionText] = useState(() => sessionStorage.getItem('draft_rx_general') || '');
   const [remarksText, setRemarksText] = useState('');
   const [submittingRx, setSubmittingRx] = useState(false);
   const [prescriptionHistory, setPrescriptionHistory] = useState([]);
 
-  const [bellRinging, setBellRinging] = useState(false);
+  // Bell Cooldown State
+  const [bellCooldown, setBellCooldown] = useState(false);
   const [statusBanner, setStatusBanner] = useState(null);
 
   const showToast = (message, type = 'success') => {
@@ -111,19 +86,14 @@ export function useDoctorPortalLogic() {
     setTimeout(() => setStatusBanner(null), 3500);
   };
 
-  useEffect(() => {
-    sessionStorage.setItem('draft_rx_general', prescriptionText);
-  }, [prescriptionText]);
+  useEffect(() => { sessionStorage.setItem('draft_rx_general', prescriptionText); }, [prescriptionText]);
 
   const handleDoctorLogin = async (e) => {
     e.preventDefault();
     setLoginError('');
     setLoggingIn(true);
     try {
-      const res = await axios.post(`${API_BASE}/doctor/login`, {
-        username: loginUsername,
-        password: loginPassword
-      });
+      const res = await axios.post(`${API_BASE}/doctor/login`, { username: loginUsername, password: loginPassword });
       setLoggedInDoctor(res.data);
       sessionStorage.setItem('wellspring_doctor_session', JSON.stringify(res.data));
       setLoginPassword('');
@@ -186,15 +156,17 @@ export function useDoctorPortalLogic() {
     }
   };
 
-  const handleSearchPatients = async (pageToLoad = 1, customQuery = searchQuery) => {
-    const q = customQuery.trim();
-    if (!q) {
+  const handleSearchPatients = async (pageToLoad = 1) => {
+    const { name, nic, phone, dob } = advancedSearch;
+    if (!name.trim() && !nic.trim() && !phone.trim() && !dob) {
       setSearchResults([]);
       return;
     }
     setSearching(true);
     try {
-      const res = await axios.get(`${API_BASE}/patients/search`, { params: { q, page: pageToLoad } });
+      const res = await axios.get(`${API_BASE}/patients/search`, {
+        params: { name, nic, phone, dob, page: pageToLoad }
+      });
       if (pageToLoad === 1) setSearchResults(res.data.data || []);
       else setSearchResults(prev => [...prev, ...(res.data.data || [])]);
       setSearchPage(pageToLoad);
@@ -209,27 +181,25 @@ export function useDoctorPortalLogic() {
   useEffect(() => {
     if (sidebarTab !== 'search') return;
     const timer = setTimeout(() => {
-      if (searchQuery.trim().length >= 2) handleSearchPatients(1, searchQuery);
-      else if (searchQuery.trim().length === 0) setSearchResults([]);
-    }, 300);
+      const { name, nic, phone, dob } = advancedSearch;
+      if (name.length >= 2 || nic.length >= 2 || phone.length >= 2 || dob) {
+        handleSearchPatients(1);
+      } else {
+        setSearchResults([]);
+      }
+    }, 400);
     return () => clearTimeout(timer);
-  }, [searchQuery, sidebarTab]);
+  }, [advancedSearch, sidebarTab]);
 
   const handleCreateWalkInPatient = async (e) => {
     e.preventDefault();
-    if (!newPatientForm.name.trim()) {
-      showToast('Patient name is required.', 'error');
-      return;
-    }
+    if (!newPatientForm.name.trim()) { showToast('Patient name is required.', 'error'); return; }
     setCreatingPatient(true);
     try {
       const res = await axios.post(`${API_BASE}/patients`, newPatientForm);
-      const createdPatient = res.data;
-      showToast(`Registered ${createdPatient.name}.`);
-      setNewPatientForm({
-        name: '', birth_date: '', phone: '', id_number: '', gender: '1', married: '0', weight: '', height: '', common: ''
-      });
-      await selectPatientForConsultation(createdPatient, null);
+      showToast(`Registered ${res.data.name}.`);
+      setNewPatientForm({ name: '', birth_date: '', phone: '', id_number: '', gender: '1', married: '0', weight: '', height: '', common: '' });
+      await selectPatientForConsultation(res.data, null);
     } catch (err) {
       showToast('Failed to register patient.', 'error');
     } finally {
@@ -271,23 +241,16 @@ export function useDoctorPortalLogic() {
 
   const handleSubmitPrescription = async (e) => {
     if (e) e.preventDefault();
-    if (!selectedPatient || !loggedInDoctor) {
-      showToast('Please select a patient first.', 'error');
-      return;
-    }
-    if (!prescriptionText.trim()) {
-      showToast('Please enter a prescription.', 'error');
-      return;
-    }
+    if (!selectedPatient || !loggedInDoctor) return showToast('Please select a patient first.', 'error');
+    if (!prescriptionText.trim()) return showToast('Please enter a prescription.', 'error');
+    
     setSubmittingRx(true);
     try {
       await axios.post(`${API_BASE}/doctor/prescribe`, {
         patient_id: selectedPatient.id, ticket_id: activeTicketId, general: prescriptionText, reason_remarks: remarksText, doctor_id: loggedInDoctor.id, doctor_name: loggedInDoctor.name, patient_name: selectedPatient.name
       });
       showToast(`Prescription sent to Counter for ${selectedPatient.name}.`);
-      setPrescriptionText('');
-      setRemarksText('');
-      sessionStorage.removeItem('draft_rx_general');
+      setPrescriptionText(''); setRemarksText(''); sessionStorage.removeItem('draft_rx_general');
       await selectPatientForConsultation(selectedPatient, activeTicketId);
       await fetchQueue();
     } catch (err) {
@@ -298,8 +261,8 @@ export function useDoctorPortalLogic() {
   };
 
   const handleRingCounterBell = async () => {
-    if (!loggedInDoctor) return;
-    setBellRinging(true);
+    if (!loggedInDoctor || bellCooldown) return;
+    setBellCooldown(true); // Triggers the visual fill animation
     try {
       await axios.post(`${API_BASE}/doctor/bell`, {
         doctor_id: loggedInDoctor.id, doctor_name: loggedInDoctor.name
@@ -308,17 +271,19 @@ export function useDoctorPortalLogic() {
     } catch (err) {
       showToast('Failed to ring counter bell.', 'error');
     } finally {
-      setTimeout(() => setBellRinging(false), 1000);
+      // Keep cooldown active for 3 seconds to prevent spam
+      setTimeout(() => setBellCooldown(false), 3000);
     }
   };
 
   return {
     activeTheme, setActiveTheme, loggedInDoctor, loginUsername, setLoginUsername, loginPassword, setLoginPassword, loginError, loggingIn,
-    handleDoctorLogin, handleDoctorLogout, sidebarTab, setSidebarTab, queueList, loadingQueue, fetchQueue, searchQuery, setSearchQuery,
-    searchResults, searchPage, hasMoreSearch, searching, handleSearchPatients, newPatientForm, setNewPatientForm, creatingPatient,
-    handleCreateWalkInPatient, selectedPatient, activeTicketId, loadingProfile, selectPatientForConsultation, commonText, setCommonText,
-    isEditingCommon, setIsEditingCommon, savingCommon, handleSaveCommonDetails, allergiesText, setAllergiesText, isEditingAllergies,
-    setIsEditingAllergies, savingAllergies, handleSaveAllergiesReports, prescriptionText, setPrescriptionText, remarksText, setRemarksText,
-    submittingRx, handleSubmitPrescription, prescriptionHistory, bellRinging, handleRingCounterBell, statusBanner
+    handleDoctorLogin, handleDoctorLogout, sidebarTab, setSidebarTab, queueList, loadingQueue, fetchQueue,
+    advancedSearch, setAdvancedSearch, searchResults, searchPage, hasMoreSearch, searching, handleSearchPatients, 
+    newPatientForm, setNewPatientForm, creatingPatient, handleCreateWalkInPatient, selectedPatient, activeTicketId, loadingProfile, 
+    selectPatientForConsultation, commonText, setCommonText, isEditingCommon, setIsEditingCommon, savingCommon, handleSaveCommonDetails, 
+    allergiesText, setAllergiesText, isEditingAllergies, setIsEditingAllergies, savingAllergies, handleSaveAllergiesReports, 
+    prescriptionText, setPrescriptionText, remarksText, setRemarksText, submittingRx, handleSubmitPrescription, prescriptionHistory, 
+    bellCooldown, handleRingCounterBell, statusBanner
   };
 }
