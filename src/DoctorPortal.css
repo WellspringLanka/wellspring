@@ -1,0 +1,652 @@
+/* ================= DOCTOR CONSULTATION PORTAL STYLES ================= */
+.doctor-portal-wrapper {
+  min-height: 100vh;
+  background-color: #061326;
+  background-image: radial-gradient(circle at 85% 15%, rgba(14, 165, 233, 0.12) 0%, transparent 55%);
+  color: #f8fafc;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= TOP HEADER BAR ================= */
+.doc-topbar {
+  height: 78px;
+  padding: 0 32px;
+  background: rgba(8, 23, 48, 0.92);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(125, 211, 252, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+.doc-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.doc-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  background: rgba(30, 58, 95, 0.6);
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  color: #e0f2fe;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.doc-back-btn:hover {
+  background: rgba(14, 165, 233, 0.25);
+  border-color: #38bdf8;
+}
+
+.doc-identity-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.doc-avatar-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.45);
+}
+
+.doc-selector-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.doc-greeting-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #7dd3fc;
+  font-weight: 700;
+}
+
+.doc-select-dropdown {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  cursor: pointer;
+  outline: none;
+  padding-right: 8px;
+}
+
+.doc-select-dropdown option {
+  background-color: #0b2244;
+  color: #ffffff;
+  font-size: 1.1rem;
+}
+
+/* Top-Right Bell Button & Status */
+.doc-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.bell-trigger-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: 2px solid #fde68a;
+  color: #ffffff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bell-trigger-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(245, 158, 11, 0.6);
+}
+
+.bell-trigger-btn.ringing {
+  animation: bellShake 0.5s ease-in-out infinite;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #a7f3d0;
+}
+
+@keyframes bellShake {
+  0%, 100% { transform: rotate(0deg) scale(1.05); }
+  25% { transform: rotate(-12deg) scale(1.08); }
+  75% { transform: rotate(12deg) scale(1.08); }
+}
+
+/* Floating Toast Notification */
+.doc-toast-banner {
+  position: fixed;
+  top: 92px;
+  right: 32px;
+  z-index: 999;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  background: #065f46;
+  border: 2px solid #34d399;
+  color: #ecfdf5;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+.doc-toast-banner.error {
+  background: #7f1d1d;
+  border-color: #f87171;
+}
+
+/* ================= MAIN 3-COLUMN WORKSPACE ================= */
+.doc-workspace-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr 410px;
+  gap: 22px;
+  padding: 24px 28px 16px 28px;
+  max-width: 1800px;
+  width: 100%;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* ================= 1. LEFT SIDEBAR (QUEUE, SEARCH, WALK-IN ADD) ================= */
+.doc-sidebar-card {
+  background: rgba(11, 28, 56, 0.85);
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  max-height: 760px;
+}
+
+.sidebar-mode-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: rgba(6, 17, 36, 0.9);
+  border-bottom: 1px solid rgba(125, 211, 252, 0.18);
+}
+
+.sidebar-tab-btn {
+  padding: 14px 8px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #94a3b8;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-tab-btn.active {
+  color: #38bdf8;
+  border-bottom-color: #38bdf8;
+  background: rgba(14, 165, 233, 0.1);
+}
+
+.sidebar-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.queue-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.queue-count-pill {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid #34d399;
+  color: #6ee7b7;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.refresh-mini-btn {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #bae6fd;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.patient-list-item {
+  width: 100%;
+  text-align: left;
+  background: rgba(17, 40, 77, 0.7);
+  border: 1px solid rgba(125, 211, 252, 0.16);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  color: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.patient-list-item:hover {
+  border-color: #38bdf8;
+  background: rgba(2, 132, 199, 0.22);
+}
+
+.patient-list-item.selected {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.45), rgba(14, 165, 233, 0.25));
+  border: 2px solid #38bdf8;
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.3);
+}
+
+.patient-item-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.patient-item-sub {
+  font-size: 0.88rem;
+  color: #bae6fd;
+}
+
+.ticket-num-badge {
+  background: #0284c7;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+/* Direct Search Input & Walk-In Form */
+.sidebar-search-input,
+.walkin-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(6, 17, 36, 0.9);
+  border: 1px solid rgba(125, 211, 252, 0.35);
+  color: #ffffff;
+  font-size: 1rem;
+  margin-bottom: 12px;
+  outline: none;
+}
+
+.sidebar-search-input:focus,
+.walkin-input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+}
+
+.walkin-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #bae6fd;
+  margin-bottom: 5px;
+}
+
+.walkin-submit-btn {
+  width: 100%;
+  padding: 13px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+  border: none;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+/* ================= 2. MIDDLE SECTION (STACKED PATIENT DETAILS) ================= */
+.doc-middle-card {
+  background: rgba(11, 28, 56, 0.85);
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  border-radius: 16px;
+  padding: 26px 30px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+}
+
+.stacked-field-block {
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: rgba(6, 18, 38, 0.78);
+  border: 1px solid rgba(125, 211, 252, 0.18);
+}
+
+.stacked-field-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #7dd3fc;
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* Extra-large, clear text for 53-year-old Doctor */
+.stacked-field-value-xl {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.stacked-field-value-lg {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #f0f9ff;
+}
+
+.editable-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.edit-toggle-btn {
+  padding: 7px 18px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #38bdf8;
+  background: rgba(14, 165, 233, 0.18);
+  color: #e0f2fe;
+  transition: all 0.2s ease;
+}
+
+.edit-toggle-btn:hover {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.edit-toggle-btn.done-mode {
+  background: #10b981;
+  border-color: #6ee7b7;
+  color: #ffffff;
+}
+
+.clinical-display-box {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: #f8fafc;
+  white-space: pre-wrap;
+  min-height: 54px;
+}
+
+.clinical-edit-textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 14px;
+  border-radius: 10px;
+  background: #040d1c;
+  border: 2px solid #38bdf8;
+  color: #ffffff;
+  font-size: 1.2rem;
+  line-height: 1.5;
+  font-family: inherit;
+  outline: none;
+}
+
+/* ================= 3. RIGHT SECTION ("TO COUNTER" - HIGHLIGHTED) ================= */
+.doc-counter-handoff-card {
+  background: linear-gradient(160deg, rgba(6, 48, 75, 0.95), rgba(8, 28, 56, 0.98));
+  border: 2px solid #00f2fe;
+  border-radius: 18px;
+  padding: 26px;
+  box-shadow: 0 18px 45px rgba(0, 242, 254, 0.18), inset 0 0 24px rgba(56, 189, 248, 0.1);
+  position: sticky;
+  top: 96px;
+}
+
+.to-counter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(0, 242, 254, 0.3);
+}
+
+.to-counter-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.live-handoff-tag {
+  background: rgba(16, 185, 129, 0.25);
+  border: 1px solid #34d399;
+  color: #6ee7b7;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.rx-shorthand-textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 18px;
+  border-radius: 14px;
+  background: rgba(3, 12, 26, 0.92);
+  border: 2px solid rgba(56, 189, 248, 0.5);
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.55;
+  font-family: 'Inter', sans-serif;
+  resize: vertical;
+  outline: none;
+  margin-bottom: 16px;
+}
+
+.rx-shorthand-textarea:focus {
+  border-color: #00f2fe;
+  box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+}
+
+.rx-remarks-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(3, 12, 26, 0.8);
+  border: 1px solid rgba(125, 211, 252, 0.35);
+  color: #e0f2fe;
+  font-size: 1.05rem;
+  margin-bottom: 20px;
+  outline: none;
+}
+
+.submit-counter-btn {
+  width: 100%;
+  padding: 18px 24px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #10b981 0%, #0284c7 100%);
+  border: 2px solid #a7f3d0;
+  color: #ffffff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(16, 185, 129, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.submit-counter-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(16, 185, 129, 0.6);
+}
+
+.submit-counter-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ================= 4. BOTTOM SECTION (HIGH-VISIBILITY PRESCRIPTION LOG) ================= */
+.doc-history-section {
+  max-width: 1800px;
+  width: 100%;
+  margin: 10px auto 60px auto;
+  padding: 0 28px;
+}
+
+.doc-history-card {
+  background: rgba(11, 28, 56, 0.9);
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  border-radius: 18px;
+  padding: 28px 32px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+
+.history-title-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.2);
+}
+
+.history-title-bar h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #f0f9ff;
+}
+
+.history-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Extra High Visibility Log Row for 53-Year-Old Doctor */
+.history-log-item {
+  display: grid;
+  grid-template-columns: 230px 1fr auto;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 24px;
+  border-radius: 14px;
+  background: rgba(6, 17, 36, 0.88);
+  border-left: 6px solid #38bdf8;
+  border-top: 1px solid rgba(125, 211, 252, 0.16);
+  border-right: 1px solid rgba(125, 211, 252, 0.16);
+  border-bottom: 1px solid rgba(125, 211, 252, 0.16);
+}
+
+.history-date-badge {
+  background: rgba(14, 165, 233, 0.18);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  padding: 12px 16px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.history-date-main {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fde047; /* High-contrast warm gold so dates stand out immediately */
+  display: block;
+}
+
+.history-ticket-sub {
+  font-size: 0.88rem;
+  color: #bae6fd;
+  margin-top: 4px;
+  display: block;
+}
+
+.history-rx-content {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.history-remarks-sub {
+  font-size: 1rem;
+  color: #93c5fd;
+  margin-top: 6px;
+}
+
+.repeat-rx-btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.16);
+  border: 1px solid #38bdf8;
+  color: #e0f2fe;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.repeat-rx-btn:hover {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+@media (max-width: 1280px) {
+  .doc-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+  .doc-counter-handoff-card {
+    position: static;
+  }
+  .history-log-item {
+    grid-template-columns: 1fr;
+  }
+}
