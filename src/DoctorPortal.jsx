@@ -8,9 +8,15 @@ import './DoctorPortal.css';
 
 export default function DoctorPortal() {
   const {
-    doctors,
-    activeDoctor,
-    setActiveDoctor,
+    loggedInDoctor,
+    loginUsername,
+    setLoginUsername,
+    loginPassword,
+    setLoginPassword,
+    loginError,
+    loggingIn,
+    handleDoctorLogin,
+    handleDoctorLogout,
     sidebarTab,
     setSidebarTab,
     queueList,
@@ -55,50 +61,93 @@ export default function DoctorPortal() {
     statusBanner
   } = useDoctorPortalLogic();
 
+  // ================= 1. DOCTOR LOGIN SCREEN =================
+  if (!loggedInDoctor) {
+    return (
+      <div className="doctor-login-wrapper">
+        <div className="login-card">
+          <div className="login-header">
+            <span className="login-badge">Wellspring Health Care</span>
+            <h1>Doctor Consultation Portal</h1>
+            <p>Sign in with your medical staff credentials</p>
+          </div>
+
+          {loginError && <div className="login-error-msg">{loginError}</div>}
+
+          <form onSubmit={handleDoctorLogin}>
+            <div className="login-form-group">
+              <label>Username</label>
+              <input
+                type="text"
+                required
+                className="login-input"
+                placeholder="Enter username (e.g., upul)"
+                value={loginUsername}
+                onChange={(e) => setLoginUsername(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <div className="login-form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                required
+                className="login-input"
+                placeholder="Enter password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+              />
+            </div>
+
+            <button type="submit" disabled={loggingIn} className="login-submit-btn">
+              {loggingIn ? 'Signing In...' : 'Sign In to Portal'}
+            </button>
+          </form>
+
+          <Link to="/" className="login-back-link">
+            ← Return to Wellspring Main Page
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ================= 2. MAIN CONSULTATION INTERFACE =================
   return (
     <div className="doctor-portal-wrapper">
-      {/* ================= TOP HEADER BAR ================= */}
+      {/* TOP HEADER BAR */}
       <header className="doc-topbar">
         <div className="doc-topbar-left">
           <Link to="/" className="doc-back-btn">
-            ← Home
+            ← Main Menu
           </Link>
 
-          <div className="doc-identity-box">
-            <div className="doc-avatar-badge">Dr</div>
-            <div className="doc-selector-wrap">
-              <span className="doc-greeting-label">Active Consultation Terminal</span>
-              <select
-                className="doc-select-dropdown"
-                value={activeDoctor.id}
-                onChange={(e) => {
-                  const found = doctors.find(d => d.id === Number(e.target.value));
-                  if (found) setActiveDoctor(found);
-                }}
-              >
-                {doctors.map((doc) => (
-                  <option key={doc.id} value={doc.id}>
-                    {doc.name} — {doc.specialty}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="topbar-divider"></div>
+
+          <div className="doc-identity-info">
+            <h1 className="doc-name-heading">{loggedInDoctor.name}</h1>
+            <span className="doc-specialty-tag">{loggedInDoctor.specialty}</span>
           </div>
         </div>
 
-        {/* TOP RIGHT: COUNTER BELL ICON BUTTON */}
+        {/* TOP RIGHT: COUNTER BELL & SIGN OUT */}
         <div className="doc-topbar-right">
           <button
             type="button"
             onClick={handleRingCounterBell}
             className={`bell-trigger-btn ${bellRinging ? 'ringing' : ''}`}
-            title="Click to ring the alert bell on the Counter screen"
+            title="Ring alert bell at the Counter"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
-            <span>{bellRinging ? 'Ringing Counter...' : 'Ring Counter Bell'}</span>
+            <span>{bellRinging ? 'Ringing...' : 'Call Counter'}</span>
+          </button>
+
+          <button type="button" onClick={handleDoctorLogout} className="doc-logout-btn">
+            Sign Out
           </button>
         </div>
       </header>
@@ -110,10 +159,10 @@ export default function DoctorPortal() {
         </div>
       )}
 
-      {/* ================= MAIN 3-COLUMN WORKSPACE ================= */}
+      {/* FULL-SCREEN 3-COLUMN WORKSPACE */}
       <div className="doc-workspace-grid">
         
-        {/* 1. LEFT SIDEBAR: ACTIVE QUEUE, DIRECT PATIENT SEARCH & WALK-IN ADD */}
+        {/* LEFT SIDEBAR: ACTIVE QUEUE, SEARCH & WALK-IN */}
         <aside className="doc-sidebar-card">
           <div className="sidebar-mode-tabs">
             <button
@@ -135,7 +184,7 @@ export default function DoctorPortal() {
               className={`sidebar-tab-btn ${sidebarTab === 'add' ? 'active' : ''}`}
               onClick={() => setSidebarTab('add')}
             >
-              + New Walk-In
+              + New Patient
             </button>
           </div>
 
@@ -144,17 +193,15 @@ export default function DoctorPortal() {
             {sidebarTab === 'queue' && (
               <div>
                 <div className="queue-header-row">
-                  <span className="queue-count-pill">
-                    {queueList.length} Waiting
-                  </span>
+                  <span className="queue-count-pill">{queueList.length} Waiting</span>
                   <button type="button" onClick={fetchQueue} className="refresh-mini-btn">
-                    {loadingQueue ? 'Refreshing...' : '↻ Refresh'}
+                    {loadingQueue ? 'Loading...' : 'Refresh'}
                   </button>
                 </div>
 
                 {queueList.length === 0 ? (
-                  <p style={{ color: '#94a3b8', textAlign: 'center', padding: '30px 10px', fontSize: '1rem' }}>
-                    No patients waiting in the active queue right now. Use <strong>Find Patient</strong> or <strong>+ New Walk-In</strong> for direct consultations.
+                  <p style={{ color: '#64748b', textAlign: 'center', padding: '32px 12px', fontSize: '0.875rem', lineHeight: '1.5' }}>
+                    No patients currently waiting in the queue. Use <strong>Find Patient</strong> or <strong>+ New Patient</strong> for direct walk-in consultations.
                   </p>
                 ) : (
                   queueList.map((item) => (
@@ -166,10 +213,10 @@ export default function DoctorPortal() {
                         selectedPatient?.id === item.patient.id ? 'selected' : ''
                       }`}
                     >
-                      <div>
+                      <div className="patient-item-info">
                         <div className="patient-item-name">{item.patient.name}</div>
                         <div className="patient-item-sub">
-                          Age: {calculateAge(item.patient.birth_date)} • {item.patient.phone || 'No Phone'}
+                          {calculateAge(item.patient.birth_date)} • {item.patient.phone || 'No Phone'}
                         </div>
                       </div>
                       <span className="ticket-num-badge">#{item.ticket_number}</span>
@@ -179,19 +226,21 @@ export default function DoctorPortal() {
               </div>
             )}
 
-            {/* TAB B: DIRECT PATIENT SEARCH (26,000+ LEGACY RECORDS) */}
+            {/* TAB B: DIRECT PATIENT SEARCH */}
             {sidebarTab === 'search' && (
               <div>
                 <input
                   type="text"
                   className="sidebar-search-input"
-                  placeholder="Search Name, Phone, NIC, Ref, or Notes..."
+                  placeholder="Search by Name, Phone, NIC, or Notes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
 
                 {searching && (
-                  <p style={{ color: '#7dd3fc', marginBottom: '10px' }}>Searching database...</p>
+                  <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '10px' }}>
+                    Searching records...
+                  </p>
                 )}
 
                 {searchResults.map((pat) => (
@@ -203,7 +252,7 @@ export default function DoctorPortal() {
                       selectedPatient?.id === pat.id ? 'selected' : ''
                     }`}
                   >
-                    <div>
+                    <div className="patient-item-info">
                       <div className="patient-item-name">{pat.name}</div>
                       <div className="patient-item-sub">
                         DOB: {formatClearDate(pat.birth_date)} ({calculateAge(pat.birth_date)})
@@ -222,7 +271,7 @@ export default function DoctorPortal() {
                     className="walkin-submit-btn"
                     style={{ marginTop: '8px' }}
                   >
-                    Load More Results
+                    Load More
                   </button>
                 )}
               </div>
@@ -231,12 +280,12 @@ export default function DoctorPortal() {
             {/* TAB C: DIRECT WALK-IN PATIENT REGISTRATION */}
             {sidebarTab === 'add' && (
               <form onSubmit={handleCreateWalkInPatient}>
-                <label className="walkin-label">Patient Full Name *</label>
+                <label className="walkin-label">Full Name *</label>
                 <input
                   type="text"
                   required
                   className="walkin-input"
-                  placeholder="e.g., Sunil Perera"
+                  placeholder="Patient full name"
                   value={newPatientForm.name}
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, name: e.target.value })}
                 />
@@ -262,80 +311,76 @@ export default function DoctorPortal() {
                 <input
                   type="text"
                   className="walkin-input"
-                  placeholder="NIC Number"
+                  placeholder="NIC number"
                   value={newPatientForm.id_number}
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, id_number: e.target.value })}
                 />
 
-                <label className="walkin-label">Common Details / Initial Notes</label>
+                <label className="walkin-label">Common Details / Medical Notes</label>
                 <input
                   type="text"
                   className="walkin-input"
-                  placeholder="Known conditions, family history..."
+                  placeholder="Initial medical notes..."
                   value={newPatientForm.common}
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, common: e.target.value })}
                 />
 
                 <button type="submit" disabled={creatingPatient} className="walkin-submit-btn">
-                  {creatingPatient ? 'Saving Patient...' : 'Save & Open Patient'}
+                  {creatingPatient ? 'Saving...' : 'Save & Open Patient'}
                 </button>
               </form>
             )}
           </div>
         </aside>
 
-        {/* 2. MIDDLE SECTION: STACKED ONE-BY-ONE PATIENT PROFILE */}
+        {/* MIDDLE SECTION: STACKED PATIENT DETAILS */}
         <main className="doc-middle-card">
           {!selectedPatient ? (
-            <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-              <h2 style={{ fontSize: '1.8rem', color: '#7dd3fc', marginBottom: '12px' }}>
-                No Patient Selected
-              </h2>
-              <p style={{ fontSize: '1.15rem', color: '#94a3b8' }}>
-                Click a patient from the <strong>Active Queue</strong> on the left, or use <strong>Find Patient</strong> to open a walk-in patient directly.
+            <div className="empty-patient-state">
+              <h2>No Patient Selected</h2>
+              <p>
+                Select a patient from the active queue on the left, or use Find Patient to look up an existing record.
               </p>
             </div>
           ) : loadingProfile ? (
-            <div style={{ textAlign: 'center', padding: '80px 20px', fontSize: '1.3rem', color: '#38bdf8' }}>
-              Loading {selectedPatient.name}&apos;s clinical profile...
+            <div className="empty-patient-state">
+              <p>Loading patient record...</p>
             </div>
           ) : (
-            <div>
-              {/* ITEM 1: PATIENT NAME */}
+            <div className="stacked-details-list">
+              {/* 1. PATIENT NAME */}
               <div className="stacked-field-block">
                 <span className="stacked-field-label">
-                  Patient Name {activeTicketId ? `• Queue Ticket #${activeTicketId}` : '• Direct Walk-In Consult'}
+                  Patient Name {activeTicketId ? `• Ticket #${activeTicketId}` : '• Direct Walk-In'}
                 </span>
-                <div className="stacked-field-value-xl">
+                <div className="stacked-field-value-primary">
                   {selectedPatient.name}
                 </div>
-                <div style={{ color: '#93c5fd', fontSize: '1rem', marginTop: '4px' }}>
-                  Patient ID: #{selectedPatient.id} {selectedPatient.phone ? `• Tel: ${selectedPatient.phone}` : ''}
+                <div className="stacked-field-meta">
+                  Patient ID: #{selectedPatient.id} {selectedPatient.phone ? `• Phone: ${selectedPatient.phone}` : ''}
                 </div>
               </div>
 
-              {/* ITEM 2: CALCULATED AGE */}
+              {/* 2. AGE */}
               <div className="stacked-field-block">
-                <span className="stacked-field-label">Patient Age (Auto-Calculated)</span>
-                <div className="stacked-field-value-lg">
+                <span className="stacked-field-label">Age</span>
+                <div className="stacked-field-value">
                   {calculateAge(selectedPatient.birth_date)}
                 </div>
               </div>
 
-              {/* ITEM 3: BIRTHDAY */}
+              {/* 3. BIRTHDAY */}
               <div className="stacked-field-block">
                 <span className="stacked-field-label">Date of Birth</span>
-                <div className="stacked-field-value-lg">
+                <div className="stacked-field-value">
                   {formatClearDate(selectedPatient.birth_date)}
                 </div>
               </div>
 
-              {/* ITEM 4: COMMON DETAILS ABOUT PATIENT (patients_master.common) */}
+              {/* 4. COMMON DETAILS ABOUT PATIENT */}
               <div className="stacked-field-block">
                 <div className="editable-header-row">
-                  <span className="stacked-field-label" style={{ marginBottom: 0 }}>
-                    Common Details About Patient
-                  </span>
+                  <span className="stacked-field-label">Common Details About Patient</span>
 
                   {!isEditingCommon ? (
                     <button
@@ -343,7 +388,7 @@ export default function DoctorPortal() {
                       className="edit-toggle-btn"
                       onClick={() => setIsEditingCommon(true)}
                     >
-                      ✎ Edit
+                      Edit
                     </button>
                   ) : (
                     <button
@@ -352,32 +397,34 @@ export default function DoctorPortal() {
                       className="edit-toggle-btn done-mode"
                       onClick={handleSaveCommonDetails}
                     >
-                      {savingCommon ? 'Saving...' : '✓ Done'}
+                      {savingCommon ? 'Saving...' : 'Done'}
                     </button>
                   )}
                 </div>
 
                 {!isEditingCommon ? (
                   <div className="clinical-display-box">
-                    {commonText ? commonText : <span style={{ color: '#64748b' }}>No common details recorded yet. Click Edit to add.</span>}
+                    {commonText ? (
+                      commonText
+                    ) : (
+                      <span className="clinical-placeholder">No common details recorded.</span>
+                    )}
                   </div>
                 ) : (
                   <textarea
                     className="clinical-edit-textarea"
                     value={commonText}
                     onChange={(e) => setCommonText(e.target.value)}
-                    placeholder="Enter long-term conditions, chronic notes, or general patient details..."
+                    placeholder="Enter general patient details or chronic conditions..."
                     autoFocus
                   />
                 )}
               </div>
 
-              {/* ITEM 5: ALLERGIES AND REPORTS (channeling_findings_master.findings_comment) */}
-              <div className="stacked-field-block" style={{ marginBottom: 0 }}>
+              {/* 5. ALLERGIES AND REPORTS */}
+              <div className="stacked-field-block">
                 <div className="editable-header-row">
-                  <span className="stacked-field-label" style={{ marginBottom: 0, color: '#fda4af' }}>
-                    Allergies &amp; Lab Reports (Findings)
-                  </span>
+                  <span className="stacked-field-label">Allergies and Reports</span>
 
                   {!isEditingAllergies ? (
                     <button
@@ -385,7 +432,7 @@ export default function DoctorPortal() {
                       className="edit-toggle-btn"
                       onClick={() => setIsEditingAllergies(true)}
                     >
-                      ✎ Edit
+                      Edit
                     </button>
                   ) : (
                     <button
@@ -394,21 +441,25 @@ export default function DoctorPortal() {
                       className="edit-toggle-btn done-mode"
                       onClick={handleSaveAllergiesReports}
                     >
-                      {savingAllergies ? 'Saving...' : '✓ Done'}
+                      {savingAllergies ? 'Saving...' : 'Done'}
                     </button>
                   )}
                 </div>
 
                 {!isEditingAllergies ? (
                   <div className="clinical-display-box">
-                    {allergiesText ? allergiesText : <span style={{ color: '#64748b' }}>No allergies or lab report findings recorded. Click Edit to add.</span>}
+                    {allergiesText ? (
+                      allergiesText
+                    ) : (
+                      <span className="clinical-placeholder">No allergies or report findings recorded.</span>
+                    )}
                   </div>
                 ) : (
                   <textarea
                     className="clinical-edit-textarea"
                     value={allergiesText}
                     onChange={(e) => setAllergiesText(e.target.value)}
-                    placeholder="Enter drug allergies, blood pressure, FBS/FBC lab values, and clinical findings..."
+                    placeholder="Enter drug allergies, investigation results, and clinical findings..."
                     autoFocus
                   />
                 )}
@@ -417,76 +468,72 @@ export default function DoctorPortal() {
           )}
         </main>
 
-        {/* 3. RIGHT SECTION: HIGHLIGHTED "TO COUNTER" PRESCRIPTION PANEL */}
+        {/* RIGHT SECTION: "TO COUNTER" PRESCRIPTION PANEL */}
         <aside className="doc-counter-handoff-card">
           <div className="to-counter-header">
-            <h2 className="to-counter-title">
-              <span>💊</span>
-              <span>To Counter</span>
-            </h2>
-            <span className="live-handoff-tag">Instant Handoff</span>
+            <h2 className="to-counter-title">To Counter</h2>
+            <span className="live-handoff-tag">Dispensary Handoff</span>
           </div>
 
           <form onSubmit={handleSubmitPrescription}>
-            <label className="stacked-field-label" style={{ color: '#bae6fd', marginBottom: '8px' }}>
-              Prescription Shorthand (Saves to channeling_master.general)
-            </label>
-            <textarea
-              className="rx-shorthand-textarea"
-              placeholder="Type prescription for Counter (e.g., dom, cinn, ome, beta his)..."
-              value={prescriptionText}
-              onChange={(e) => setPrescriptionText(e.target.value)}
-              disabled={!selectedPatient}
-            />
+            <div className="counter-form-group">
+              <label className="counter-form-label">Prescription</label>
+              <textarea
+                className="rx-shorthand-textarea"
+                placeholder="Enter prescription for the Counter (e.g., dom, cinn, ome)..."
+                value={prescriptionText}
+                onChange={(e) => setPrescriptionText(e.target.value)}
+                disabled={!selectedPatient}
+              />
+            </div>
 
-            <label className="stacked-field-label" style={{ color: '#bae6fd', marginBottom: '8px' }}>
-              Special Remarks / Visit Note (Optional)
-            </label>
-            <input
-              type="text"
-              className="rx-remarks-input"
-              placeholder="Optional note or instruction for Counter..."
-              value={remarksText}
-              onChange={(e) => setRemarksText(e.target.value)}
-              disabled={!selectedPatient}
-            />
+            <div className="counter-form-group">
+              <label className="counter-form-label">Special Remarks (Optional)</label>
+              <input
+                type="text"
+                className="rx-remarks-input"
+                placeholder="Additional instructions for Counter..."
+                value={remarksText}
+                onChange={(e) => setRemarksText(e.target.value)}
+                disabled={!selectedPatient}
+              />
+            </div>
 
             <button
               type="submit"
               disabled={!selectedPatient || submittingRx}
               className="submit-counter-btn"
             >
-              {submittingRx ? 'SENDING TO COUNTER...' : 'SUBMIT TO COUNTER →'}
+              {submittingRx ? 'Sending...' : 'Submit to Counter'}
             </button>
           </form>
         </aside>
       </div>
 
-      {/* ================= 4. BOTTOM SECTION: PAST PRESCRIPTION HISTORY LOG ================= */}
+      {/* BOTTOM SECTION: PAST PRESCRIPTION LOG */}
       <section className="doc-history-section">
         <div className="doc-history-card">
           <div className="history-title-bar">
             <h2>
-              Past Prescription Log {selectedPatient ? `— ${selectedPatient.name}` : ''}
+              Prescription History {selectedPatient ? `— ${selectedPatient.name}` : ''}
             </h2>
-            <span style={{ color: '#bae6fd', fontSize: '1.05rem', fontWeight: 600 }}>
-              {prescriptionHistory.length} Recorded Visits
+            <span className="history-count-label">
+              {prescriptionHistory.length} Records
             </span>
           </div>
 
           {!selectedPatient ? (
-            <p style={{ color: '#94a3b8', fontSize: '1.15rem' }}>
-              Select a patient above to view their complete historical prescription log.
+            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
+              Select a patient to view past prescriptions.
             </p>
           ) : prescriptionHistory.length === 0 ? (
-            <p style={{ color: '#94a3b8', fontSize: '1.2rem' }}>
-              No previous prescriptions found in <code>channeling_master</code> for this patient.
+            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
+              No previous prescription records found for this patient.
             </p>
           ) : (
             <div className="history-log-list">
               {prescriptionHistory.map((item) => (
                 <div key={item.id} className="history-log-item">
-                  {/* Large, High-Contrast Date Box */}
                   <div className="history-date-badge">
                     <span className="history-date-main">
                       {formatClearDate(item.visit_date)}
@@ -496,24 +543,21 @@ export default function DoctorPortal() {
                     </span>
                   </div>
 
-                  {/* Large Prescription Text */}
-                  <div>
+                  <div className="history-rx-body">
                     <div className="history-rx-content">{item.general}</div>
                     {item.reason_remarks && (
                       <div className="history-remarks-sub">
-                        Note: {item.reason_remarks}
+                        Remarks: {item.reason_remarks}
                       </div>
                     )}
                   </div>
 
-                  {/* 1-Click Repeat Prescription Button */}
                   <button
                     type="button"
                     className="repeat-rx-btn"
                     onClick={() => setPrescriptionText(item.general)}
-                    title="Copy this past prescription into today's To Counter box"
                   >
-                    ↻ Copy to Today
+                    Copy to Prescription
                   </button>
                 </div>
               ))}

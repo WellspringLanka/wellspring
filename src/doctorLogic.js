@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Helper: Calculate accurate Age from birth_date (YYYY-MM-DD)
+// Calculate patient age from birth_date
 export function calculateAge(birthDateString) {
   if (!birthDateString) return 'Not Recorded';
   const birth = new Date(birthDateString);
@@ -24,9 +24,9 @@ export function calculateAge(birthDateString) {
   return `${years} Years`;
 }
 
-// Helper: Format Dates clearly for 53-year-old Doctor readability (e.g., "14 Nov 2026")
+// Format date cleanly (e.g., 11 Nov 2026)
 export function formatClearDate(dateString) {
-  if (!dateString) return 'No Date Recorded';
+  if (!dateString) return 'Not Recorded';
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return dateString;
   return date.toLocaleDateString('en-GB', {
@@ -37,15 +37,15 @@ export function formatClearDate(dateString) {
 }
 
 export function useDoctorPortalLogic() {
-  // Doctors & Active Selected Doctor
-  const [doctors, setDoctors] = useState([
-    { id: 1, name: 'Dr. Upul', specialty: 'Senior Medical Officer' }
-  ]);
-  const [activeDoctor, setActiveDoctor] = useState({
-    id: 1,
-    name: 'Dr. Upul',
-    specialty: 'Senior Medical Officer'
+  // 1. Doctor Authentication State (Isolated per browser tab via sessionStorage)
+  const [loggedInDoctor, setLoggedInDoctor] = useState(() => {
+    const saved = sessionStorage.getItem('wellspring_doctor_session');
+    return saved ? JSON.parse(saved) : null;
   });
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loggingIn, setLoggingIn] = useState(false);
 
   // Left Sidebar Tabs: 'queue' | 'search' | 'add'
   const [sidebarTab, setSidebarTab] = useState('queue');
@@ -54,7 +54,7 @@ export function useDoctorPortalLogic() {
   const [queueList, setQueueList] = useState([]);
   const [loadingQueue, setLoadingQueue] = useState(false);
 
-  // Direct Search State (Server-side paginated)
+  // Direct Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchPage, setSearchPage] = useState(1);
@@ -77,7 +77,7 @@ export function useDoctorPortalLogic() {
   const [activeTicketId, setActiveTicketId] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
 
-  // Editable Fields State: "Common Details" & "Allergies and Reports"
+  // Editable Fields State
   const [commonText, setCommonText] = useState('');
   const [isEditingCommon, setIsEditingCommon] = useState(false);
   const [savingCommon, setSavingCommon] = useState(false);
@@ -86,7 +86,7 @@ export function useDoctorPortalLogic() {
   const [isEditingAllergies, setIsEditingAllergies] = useState(false);
   const [savingAllergies, setSavingAllergies] = useState(false);
 
-  // Right Panel: "To Counter" Prescription State (Tab-isolated via sessionStorage)
+  // Right Panel: "To Counter" Prescription State
   const [prescriptionText, setPrescriptionText] = useState(() => {
     return sessionStorage.getItem('draft_rx_general') || '';
   });
@@ -105,27 +105,45 @@ export function useDoctorPortalLogic() {
     setTimeout(() => setStatusBanner(null), 3500);
   };
 
-  // Save draft prescription to tab-isolated sessionStorage
   useEffect(() => {
     sessionStorage.setItem('draft_rx_general', prescriptionText);
   }, [prescriptionText]);
 
-  // 1. Fetch Doctors List on Mount
-  useEffect(() => {
-    axios.get(`${API_BASE}/doctors`)
-      .then(res => {
-        if (res.data && res.data.length > 0) {
-          setDoctors(res.data);
-          setActiveDoctor(res.data[0]);
-        }
-      })
-      .catch(() => {
-        // Fallback to Dr. Upul if backend is waking up
-      });
-  }, []);
+  // Handle Doctor Login
+  const handleDoctorLogin = async (e) => {
+    e.preventDefault();
+    setLoginError('');
+    setLoggingIn(true);
 
-  // 2. Fetch Active Queue
+    try {
+      const res = await axios.post(`${API_BASE}/doctor/login`, {
+        username: loginUsername,
+        password: loginPassword
+      });
+      const docData = res.data;
+      setLoggedInDoctor(docData);
+      sessionStorage.setItem('wellspring_doctor_session', JSON.stringify(docData));
+      setLoginPassword('');
+    } catch (err) {
+      setLoginError(
+        err.response?.data?.error || 'Unable to sign in. Please check your credentials.'
+      );
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
+  // Handle Doctor Logout
+  const handleDoctorLogout = () => {
+    sessionStorage.removeItem('wellspring_doctor_session');
+    setLoggedInDoctor(null);
+    setSelectedPatient(null);
+    setActiveTicketId(null);
+  };
+
+  // Fetch Active Queue
   const fetchQueue = useCallback(async () => {
+    if (!loggedInDoctor) return;
     setLoadingQueue(true);
     try {
       const res = await axios.get(`${API_BASE}/doctor/queue`);
@@ -135,15 +153,16 @@ export function useDoctorPortalLogic() {
     } finally {
       setLoadingQueue(false);
     }
-  }, []);
+  }, [loggedInDoctor]);
 
   useEffect(() => {
+    if (!loggedInDoctor) return;
     fetchQueue();
-    const interval = setInterval(fetchQueue, 10000); // Refresh queue every 10s
+    const interval = setInterval(fetchQueue, 10000);
     return () => clearInterval(interval);
-  }, [fetchQueue]);
+  }, [fetchQueue, loggedInDoctor]);
 
-  // 3. Select a Patient (From Queue OR Direct Search) & Fetch Full Consultation Data
+  // Select a Patient & Fetch Full Consultation Data
   const selectPatientForConsultation = async (patientObj, ticketId = null) => {
     if (!patientObj || !patientObj.id) return;
     setLoadingProfile(true);
@@ -160,18 +179,17 @@ export function useDoctorPortalLogic() {
       setAllergiesText(allergiesAndReports || '');
       setPrescriptionHistory(history || []);
     } catch (err) {
-      // Fallback if only basic patient object is available
       setSelectedPatient(patientObj);
       setCommonText(patientObj.common || '');
       setAllergiesText('');
       setPrescriptionHistory([]);
-      showToast('Loaded offline patient view. Check backend connection.', 'warning');
+      showToast('Could not fetch complete patient history.', 'error');
     } finally {
       setLoadingProfile(false);
     }
   };
 
-  // 4. Server-Side Patient Search (By Name, Phone, NIC, Reference, Common)
+  // Server-Side Patient Search
   const handleSearchPatients = async (pageToLoad = 1, customQuery = searchQuery) => {
     const q = customQuery.trim();
     if (!q) {
@@ -197,7 +215,6 @@ export function useDoctorPortalLogic() {
     }
   };
 
-  // Trigger search automatically as doctor types (debounced 300ms)
   useEffect(() => {
     if (sidebarTab !== 'search') return;
     const timer = setTimeout(() => {
@@ -210,18 +227,18 @@ export function useDoctorPortalLogic() {
     return () => clearTimeout(timer);
   }, [searchQuery, sidebarTab]);
 
-  // 5. Add New Walk-In Patient Directly from Doctor Sidebar
+  // Add New Walk-In Patient Directly
   const handleCreateWalkInPatient = async (e) => {
     e.preventDefault();
     if (!newPatientForm.name.trim()) {
-      showToast('Please enter the patient name.', 'error');
+      showToast('Patient name is required.', 'error');
       return;
     }
     setCreatingPatient(true);
     try {
       const res = await axios.post(`${API_BASE}/patients`, newPatientForm);
       const createdPatient = res.data;
-      showToast(`Added ${createdPatient.name} & loaded for consultation!`);
+      showToast(`Registered ${createdPatient.name} for consultation.`);
       setNewPatientForm({
         name: '',
         birth_date: '',
@@ -232,13 +249,13 @@ export function useDoctorPortalLogic() {
       });
       await selectPatientForConsultation(createdPatient, null);
     } catch (err) {
-      showToast('Failed to add patient to database.', 'error');
+      showToast('Failed to register walk-in patient.', 'error');
     } finally {
       setCreatingPatient(false);
     }
   };
 
-  // 6. Save Edited "Common Details" to patients_master.common
+  // Save Edited "Common Details"
   const handleSaveCommonDetails = async () => {
     if (!selectedPatient) return;
     setSavingCommon(true);
@@ -248,45 +265,45 @@ export function useDoctorPortalLogic() {
       });
       setSelectedPatient(prev => ({ ...prev, common: commonText }));
       setIsEditingCommon(false);
-      showToast('Common details saved to database.');
+      showToast('Common details updated.');
     } catch (err) {
-      showToast('Error saving common details.', 'error');
+      showToast('Failed to update common details.', 'error');
     } finally {
       setSavingCommon(false);
     }
   };
 
-  // 7. Save Edited "Allergies & Reports" to channeling_findings_master.findings_comment
+  // Save Edited "Allergies & Reports"
   const handleSaveAllergiesReports = async () => {
-    if (!selectedPatient) return;
+    if (!selectedPatient || !loggedInDoctor) return;
     setSavingAllergies(true);
     try {
       const res = await axios.put(`${API_BASE}/patients/${selectedPatient.id}/allergies-reports`, {
         findings_comment: allergiesText,
         active_ticket_id: activeTicketId,
-        doctor_id: activeDoctor.id
+        doctor_id: loggedInDoctor.id
       });
       if (res.data.ticket_id && !activeTicketId) {
         setActiveTicketId(res.data.ticket_id);
       }
       setIsEditingAllergies(false);
-      showToast('Allergies & Reports saved to database.');
+      showToast('Allergies and reports updated.');
     } catch (err) {
-      showToast('Error saving Allergies & Reports.', 'error');
+      showToast('Failed to update allergies and reports.', 'error');
     } finally {
       setSavingAllergies(false);
     }
   };
 
-  // 8. Submit Prescription ("To Counter" -> channeling_master.general)
+  // Submit Prescription ("To Counter" -> channeling_master.general)
   const handleSubmitPrescription = async (e) => {
     if (e) e.preventDefault();
-    if (!selectedPatient) {
+    if (!selectedPatient || !loggedInDoctor) {
       showToast('Please select a patient first.', 'error');
       return;
     }
     if (!prescriptionText.trim()) {
-      showToast('Please enter the prescription before submitting to Counter.', 'error');
+      showToast('Please enter a prescription before submitting.', 'error');
       return;
     }
 
@@ -297,46 +314,52 @@ export function useDoctorPortalLogic() {
         ticket_id: activeTicketId,
         general: prescriptionText,
         reason_remarks: remarksText,
-        doctor_id: activeDoctor.id,
-        doctor_name: activeDoctor.name,
+        doctor_id: loggedInDoctor.id,
+        doctor_name: loggedInDoctor.name,
         patient_name: selectedPatient.name
       });
 
-      showToast(`Prescription for ${selectedPatient.name} sent to Counter!`);
+      showToast(`Prescription sent to Counter for ${selectedPatient.name}.`);
       setPrescriptionText('');
       setRemarksText('');
       sessionStorage.removeItem('draft_rx_general');
 
-      // Refresh patient history log & active queue
       await selectPatientForConsultation(selectedPatient, activeTicketId);
       await fetchQueue();
     } catch (err) {
-      showToast('Failed to send prescription to Counter.', 'error');
+      showToast('Failed to submit prescription.', 'error');
     } finally {
       setSubmittingRx(false);
     }
   };
 
-  // 9. Ring Counter Bell (Top-Right Bell Button)
+  // Ring Counter Bell
   const handleRingCounterBell = async () => {
+    if (!loggedInDoctor) return;
     setBellRinging(true);
     try {
       await axios.post(`${API_BASE}/doctor/bell`, {
-        doctor_id: activeDoctor.id,
-        doctor_name: activeDoctor.name
+        doctor_id: loggedInDoctor.id,
+        doctor_name: loggedInDoctor.name
       });
-      showToast('🔔 Counter Bell Rang! Counter has been alerted.');
+      showToast('Counter bell rung.');
     } catch (err) {
-      showToast('🔔 Bell triggered (Offline mode).', 'warning');
+      showToast('Failed to ring counter bell.', 'error');
     } finally {
-      setTimeout(() => setBellRinging(false), 1200);
+      setTimeout(() => setBellRinging(false), 1000);
     }
   };
 
   return {
-    doctors,
-    activeDoctor,
-    setActiveDoctor,
+    loggedInDoctor,
+    loginUsername,
+    setLoginUsername,
+    loginPassword,
+    setLoginPassword,
+    loginError,
+    loggingIn,
+    handleDoctorLogin,
+    handleDoctorLogout,
     sidebarTab,
     setSidebarTab,
     queueList,
