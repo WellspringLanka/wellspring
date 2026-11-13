@@ -1213,3 +1213,36 @@
 .advanced-search-grid .full-width {
   grid-column: 1 / -1;
 }
+
+/* ================= SIDE-BY-SIDE SPLIT FIELDS ================= */
+.split-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.clinical-edit-select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 2px solid var(--theme-primary);
+  color: #0f172a;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  outline: none;
+  margin-top: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clinical-edit-select:focus {
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15); /* Teal glow */
+}
+
+@media (max-width: 900px) {
+  .split-field-row {
+    grid-template-columns: 1fr;
+  }
+}

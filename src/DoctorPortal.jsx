@@ -41,6 +41,12 @@ export default function DoctorPortal() {
     activeTicketId,
     loadingProfile,
     selectPatientForConsultation,
+    isEditingMarital,
+    setIsEditingMarital,
+    maritalValue,
+    setMaritalValue,
+    savingMarital,
+    handleSaveMaritalStatus,
     commonText,
     setCommonText,
     isEditingCommon,
@@ -540,6 +546,60 @@ export default function DoctorPortal() {
                 <span className="stacked-field-label">Date of Birth</span>
                 <div className="stacked-field-value">
                   {formatClearDate(selectedPatient.birth_date)}
+                </div>
+              </div>
+
+              {/* NEW SIDE-BY-SIDE SPLIT ROW */}
+              <div className="split-field-row">
+                
+                {/* GENDER (FIXED) */}
+                <div className="stacked-field-block">
+                  <span className="stacked-field-label">Gender</span>
+                  <div className="stacked-field-value">
+                    {selectedPatient.gender === 1 ? 'Male' : selectedPatient.gender === 2 ? 'Female' : 'Not Specified'}
+                  </div>
+                </div>
+
+                {/* MARITAL STATUS (EDITABLE) */}
+                <div className="stacked-field-block">
+                  <div className="editable-header-row">
+                    <span className="stacked-field-label">Marital Status</span>
+
+                    {!isEditingMarital ? (
+                      <button
+                        type="button"
+                        className="edit-toggle-btn"
+                        onClick={() => setIsEditingMarital(true)}
+                      >
+                        Edit
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={savingMarital}
+                        className="edit-toggle-btn done-mode"
+                        onClick={handleSaveMaritalStatus}
+                      >
+                        {savingMarital ? 'Saving...' : 'Done'}
+                      </button>
+                    )}
+                  </div>
+
+                  {!isEditingMarital ? (
+                    <div className="stacked-field-value" style={{ marginTop: '4px' }}>
+                      {selectedPatient.married === 1 ? 'Married' : 'Single / Unmarried'}
+                    </div>
+                  ) : (
+                    <select
+                      className="clinical-edit-select"
+                      value={maritalValue}
+                      onChange={(e) => setMaritalValue(e.target.value)}
+                      autoFocus
+                    >
+                      <option value="0">Single / Unmarried</option>
+                      <option value="1">Married</option>
+                    </select>
+                  )}
                 </div>
               </div>
 

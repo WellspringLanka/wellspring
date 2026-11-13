@@ -48,7 +48,6 @@ export function useDoctorPortalLogic() {
   const [queueList, setQueueList] = useState([]);
   const [loadingQueue, setLoadingQueue] = useState(false);
 
-  // Upgraded Advanced Search State
   const [advancedSearch, setAdvancedSearch] = useState({ name: '', nic: '', phone: '', dob: '' });
   const [searchResults, setSearchResults] = useState([]);
   const [searchPage, setSearchPage] = useState(1);
@@ -64,6 +63,11 @@ export function useDoctorPortalLogic() {
   const [activeTicketId, setActiveTicketId] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
 
+  // Editable Marital Status State
+  const [isEditingMarital, setIsEditingMarital] = useState(false);
+  const [maritalValue, setMaritalValue] = useState('0');
+  const [savingMarital, setSavingMarital] = useState(false);
+
   const [commonText, setCommonText] = useState('');
   const [isEditingCommon, setIsEditingCommon] = useState(false);
   const [savingCommon, setSavingCommon] = useState(false);
@@ -77,7 +81,6 @@ export function useDoctorPortalLogic() {
   const [submittingRx, setSubmittingRx] = useState(false);
   const [prescriptionHistory, setPrescriptionHistory] = useState([]);
 
-  // Bell Cooldown State
   const [bellCooldown, setBellCooldown] = useState(false);
   const [statusBanner, setStatusBanner] = useState(null);
 
@@ -90,8 +93,7 @@ export function useDoctorPortalLogic() {
 
   const handleDoctorLogin = async (e) => {
     e.preventDefault();
-    setLoginError('');
-    setLoggingIn(true);
+    setLoginError(''); setLoggingIn(true);
     try {
       const res = await axios.post(`${API_BASE}/doctor/login`, { username: loginUsername, password: loginPassword });
       setLoggedInDoctor(res.data);
@@ -106,9 +108,7 @@ export function useDoctorPortalLogic() {
 
   const handleDoctorLogout = () => {
     sessionStorage.removeItem('wellspring_doctor_session');
-    setLoggedInDoctor(null);
-    setSelectedPatient(null);
-    setActiveTicketId(null);
+    setLoggedInDoctor(null); setSelectedPatient(null); setActiveTicketId(null);
   };
 
   const fetchQueue = useCallback(async () => {
@@ -136,17 +136,23 @@ export function useDoctorPortalLogic() {
     setLoadingProfile(true);
     setIsEditingCommon(false);
     setIsEditingAllergies(false);
+    setIsEditingMarital(false);
     setActiveTicketId(ticketId);
 
     try {
       const res = await axios.get(`${API_BASE}/patients/${patientObj.id}/consultation`);
       const { patient, allergiesAndReports, prescriptionHistory: history } = res.data;
       setSelectedPatient(patient);
+      
+      // Load Marital Status correctly
+      setMaritalValue(patient.married ? patient.married.toString() : '0');
+      
       setCommonText(patient.common || '');
       setAllergiesText(allergiesAndReports || '');
       setPrescriptionHistory(history || []);
     } catch (err) {
       setSelectedPatient(patientObj);
+      setMaritalValue(patientObj.married ? patientObj.married.toString() : '0');
       setCommonText(patientObj.common || '');
       setAllergiesText('');
       setPrescriptionHistory([]);
@@ -159,18 +165,14 @@ export function useDoctorPortalLogic() {
   const handleSearchPatients = async (pageToLoad = 1) => {
     const { name, nic, phone, dob } = advancedSearch;
     if (!name.trim() && !nic.trim() && !phone.trim() && !dob) {
-      setSearchResults([]);
-      return;
+      setSearchResults([]); return;
     }
     setSearching(true);
     try {
-      const res = await axios.get(`${API_BASE}/patients/search`, {
-        params: { name, nic, phone, dob, page: pageToLoad }
-      });
+      const res = await axios.get(`${API_BASE}/patients/search`, { params: { name, nic, phone, dob, page: pageToLoad } });
       if (pageToLoad === 1) setSearchResults(res.data.data || []);
       else setSearchResults(prev => [...prev, ...(res.data.data || [])]);
-      setSearchPage(pageToLoad);
-      setHasMoreSearch(res.data.hasMore);
+      setSearchPage(pageToLoad); setHasMoreSearch(res.data.hasMore);
     } catch (err) {
       showToast('Search failed.', 'error');
     } finally {
@@ -182,11 +184,8 @@ export function useDoctorPortalLogic() {
     if (sidebarTab !== 'search') return;
     const timer = setTimeout(() => {
       const { name, nic, phone, dob } = advancedSearch;
-      if (name.length >= 2 || nic.length >= 2 || phone.length >= 2 || dob) {
-        handleSearchPatients(1);
-      } else {
-        setSearchResults([]);
-      }
+      if (name.length >= 2 || nic.length >= 2 || phone.length >= 2 || dob) handleSearchPatients(1);
+      else setSearchResults([]);
     }, 400);
     return () => clearTimeout(timer);
   }, [advancedSearch, sidebarTab]);
@@ -204,6 +203,22 @@ export function useDoctorPortalLogic() {
       showToast('Failed to register patient.', 'error');
     } finally {
       setCreatingPatient(false);
+    }
+  };
+
+  // Save Marital Status
+  const handleSaveMaritalStatus = async () => {
+    if (!selectedPatient) return;
+    setSavingMarital(true);
+    try {
+      await axios.put(`${API_BASE}/patients/${selectedPatient.id}/marital-status`, { married: maritalValue });
+      setSelectedPatient(prev => ({ ...prev, married: Number(maritalValue) }));
+      setIsEditingMarital(false);
+      showToast('Marital status updated successfully.');
+    } catch (err) {
+      showToast('Failed to update marital status.', 'error');
+    } finally {
+      setSavingMarital(false);
     }
   };
 
@@ -226,9 +241,7 @@ export function useDoctorPortalLogic() {
     if (!selectedPatient || !loggedInDoctor) return;
     setSavingAllergies(true);
     try {
-      const res = await axios.put(`${API_BASE}/patients/${selectedPatient.id}/allergies-reports`, {
-        findings_comment: allergiesText, active_ticket_id: activeTicketId, doctor_id: loggedInDoctor.id
-      });
+      const res = await axios.put(`${API_BASE}/patients/${selectedPatient.id}/allergies-reports`, { findings_comment: allergiesText, active_ticket_id: activeTicketId, doctor_id: loggedInDoctor.id });
       if (res.data.ticket_id && !activeTicketId) setActiveTicketId(res.data.ticket_id);
       setIsEditingAllergies(false);
       showToast('Allergies and reports updated.');
@@ -262,16 +275,13 @@ export function useDoctorPortalLogic() {
 
   const handleRingCounterBell = async () => {
     if (!loggedInDoctor || bellCooldown) return;
-    setBellCooldown(true); // Triggers the visual fill animation
+    setBellCooldown(true);
     try {
-      await axios.post(`${API_BASE}/doctor/bell`, {
-        doctor_id: loggedInDoctor.id, doctor_name: loggedInDoctor.name
-      });
+      await axios.post(`${API_BASE}/doctor/bell`, { doctor_id: loggedInDoctor.id, doctor_name: loggedInDoctor.name });
       showToast('Counter bell rung!');
     } catch (err) {
       showToast('Failed to ring counter bell.', 'error');
     } finally {
-      // Keep cooldown active for 3 seconds to prevent spam
       setTimeout(() => setBellCooldown(false), 3000);
     }
   };
@@ -281,7 +291,9 @@ export function useDoctorPortalLogic() {
     handleDoctorLogin, handleDoctorLogout, sidebarTab, setSidebarTab, queueList, loadingQueue, fetchQueue,
     advancedSearch, setAdvancedSearch, searchResults, searchPage, hasMoreSearch, searching, handleSearchPatients, 
     newPatientForm, setNewPatientForm, creatingPatient, handleCreateWalkInPatient, selectedPatient, activeTicketId, loadingProfile, 
-    selectPatientForConsultation, commonText, setCommonText, isEditingCommon, setIsEditingCommon, savingCommon, handleSaveCommonDetails, 
+    selectPatientForConsultation, 
+    isEditingMarital, setIsEditingMarital, maritalValue, setMaritalValue, savingMarital, handleSaveMaritalStatus,
+    commonText, setCommonText, isEditingCommon, setIsEditingCommon, savingCommon, handleSaveCommonDetails, 
     allergiesText, setAllergiesText, isEditingAllergies, setIsEditingAllergies, savingAllergies, handleSaveAllergiesReports, 
     prescriptionText, setPrescriptionText, remarksText, setRemarksText, submittingRx, handleSubmitPrescription, prescriptionHistory, 
     bellCooldown, handleRingCounterBell, statusBanner
