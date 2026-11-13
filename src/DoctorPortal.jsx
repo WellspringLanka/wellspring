@@ -642,7 +642,7 @@ export default function DoctorPortal() {
           <form onSubmit={handleSubmitPrescription}>
             <div className="counter-form-group">
               <label className="counter-form-label">
-                Prescription Medicines *
+                Prescription
               </label>
               <textarea
                 className="rx-shorthand-textarea"
@@ -655,14 +655,12 @@ export default function DoctorPortal() {
 
             <div className="counter-form-group">
               <label className="counter-form-label">
-                Doctor&apos;s Visit Remarks (Optional)
+                Doctor Remarks
               </label>
-              <span className="counter-db-sub">
-                Saved to patient consultation history (channeling_master.reason_remarks)
-              </span>
+              {/* Removed the subtext here */}
               <textarea
                 className="rx-remarks-textarea"
-                placeholder="Optional clinical remarks or diagnosis notes for this visit..."
+                placeholder="Clinical remarks or diagnosis notes for this visit..."
                 value={remarksText}
                 onChange={(e) => setRemarksText(e.target.value)}
                 disabled={!selectedPatient}
@@ -738,8 +736,8 @@ export default function DoctorPortal() {
                         type="button"
                         className="repeat-rx-btn"
                         onClick={() => {
+                          // ONLY copies the prescription, ignores remarks
                           setPrescriptionText(item.general);
-                          if (item.reason_remarks) setRemarksText(item.reason_remarks);
                         }}
                       >
                         Copy to Today
