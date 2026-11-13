@@ -304,11 +304,12 @@ export default function DoctorPortal() {
                   </div>
 
                   <div className="walkin-form-group full-width">
-                    <label className="walkin-label">Date of Birth (Exact Date)</label>
+                    <label className="walkin-label">Date of Birth (Year or Exact Date)</label>
                     <input
-                      type="date"
+                      type="text"
                       className="sidebar-search-input"
                       style={{ marginBottom: 0 }}
+                      placeholder="e.g., 2005 or 1993-05-14"
                       value={advancedSearch.dob}
                       onChange={(e) => setAdvancedSearch({ ...advancedSearch, dob: e.target.value })}
                     />
