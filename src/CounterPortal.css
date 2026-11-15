@@ -1,0 +1,654 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Tangerine:wght@700&display=swap');
+
+/* ================= FULL-WINDOW 3-ZONE COUNTER WORKSPACE ================= */
+.counter-workspace-grid {
+  width: 100%;
+  max-width: 100vw;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 300px 390px minmax(0, 1fr);
+  gap: 20px;
+  padding: 20px 28px;
+  align-items: start;
+}
+
+/* 1. LEFT SIDEBAR (COUNTER CONSOLE) */
+.counter-sidebar-card {
+  background: #ffffff;
+  border: 1.5px solid #dbe4f0;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 115px);
+  min-height: 660px;
+  overflow: hidden;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+}
+
+.counter-nav-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 16px;
+  background: #f8fafc;
+  border-bottom: 1.5px solid #e2e8f0;
+}
+
+.counter-nav-btn {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  color: #334155;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+.counter-nav-btn:hover {
+  border-color: var(--theme-primary);
+  color: var(--theme-primary);
+  transform: translateX(2px);
+}
+
+.counter-nav-btn.active {
+  background: var(--theme-primary);
+  border-color: var(--theme-primary);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(13, 148, 136, 0.28);
+}
+
+.nav-badge-pill {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  color: inherit;
+}
+
+.counter-nav-btn.active .nav-badge-pill {
+  background: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+}
+
+.counter-sidebar-footer {
+  margin-top: auto;
+  padding: 18px 16px;
+  background: #f1f5f9;
+  border-top: 1px solid #e2e8f0;
+  font-size: 0.82rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+/* LIVE DOCTOR BELL ALERT RECEIVER IN TOP BAR */
+.counter-bell-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.counter-bell-indicator.ringing-alert {
+  background: linear-gradient(135deg, #f59e0b 0%, #dc2626 100%);
+  border-color: #fef08a;
+  color: #ffffff;
+  animation: pulseDoctorBell 0.8s infinite alternate;
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.75);
+}
+
+@keyframes pulseDoctorBell {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.06); }
+}
+
+/* 2. MIDDLE COLUMN: INCOMING DOCTOR PRESCRIPTIONS & FAMILY SELECTOR */
+.counter-rx-tray-card {
+  background: #ffffff;
+  border: 1.5px solid #dbe4f0;
+  border-top: 5px solid var(--theme-primary);
+  border-radius: 20px;
+  padding: 20px;
+  height: calc(100vh - 115px);
+  min-height: 660px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+}
+
+.rx-tray-scroll {
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 4px;
+}
+
+.rx-Wait-card {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 15px 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.rx-Wait-card:hover {
+  border-color: var(--theme-primary);
+  background: #ffffff;
+}
+
+.rx-Wait-card.selected {
+  background: var(--theme-soft-bg);
+  border: 2px solid var(--theme-primary);
+  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.14);
+}
+
+.rx-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.rx-patient-title {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.rx-family-toggle-btn {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  border: 1.5px solid var(--theme-primary);
+  background: #ffffff;
+  color: var(--theme-dark);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.rx-family-toggle-btn.active {
+  background: var(--theme-primary);
+  color: #ffffff;
+}
+
+.rx-shorthand-preview {
+  background: #ffffff;
+  border: 1px dashed #94a3b8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: 'Inter', monospace, sans-serif;
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: pre-wrap;
+  margin-top: 6px;
+}
+
+.rx-card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.outdoor-quick-btn {
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  color: #be123c;
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.outdoor-quick-btn:hover {
+  background: #ffe4e6;
+}
+
+/* 3. RIGHT WIDE COLUMN: POS & BILLING TERMINAL */
+.counter-pos-card {
+  background: #ffffff;
+  border: 1.5px solid #dbe4f0;
+  border-top: 5px solid #16a34a;
+  border-radius: 20px;
+  padding: 22px 26px;
+  min-height: calc(100vh - 115px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+}
+
+/* Active Family Prescription Display Strip inside POS */
+.pos-active-rx-banner {
+  background: #f0fdfa;
+  border: 1.5px solid #99f6e4;
+  border-radius: 16px;
+  padding: 14px 18px;
+}
+
+.pos-rx-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.pos-rx-mini-card {
+  background: #ffffff;
+  border: 1.5px solid #5eead4;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.pos-rx-mini-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f766e;
+  margin-bottom: 4px;
+}
+
+.pos-rx-mini-text {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: pre-wrap;
+  line-height: 1.45;
+}
+
+/* Dual POS Entry Grid: Left = Medicines (with Qty), Right = Clinic Fees (No Qty) */
+.pos-dual-entry-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 16px;
+}
+
+.pos-entry-box {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+
+.pos-entry-box.service-box {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.pos-entry-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #1e293b;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.med-entry-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) 125px 85px auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.service-entry-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) 125px auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.pos-input-label {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #475569;
+  margin-bottom: 5px;
+}
+
+.pos-field-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: #0f172a;
+  outline: none;
+}
+
+.pos-field-input:focus {
+  border-color: var(--theme-primary);
+  box-shadow: 0 0 0 3px var(--theme-soft-bg);
+}
+
+/* Autocomplete Dropdown Menu */
+.med-autocomplete-wrap {
+  position: relative;
+}
+
+.med-suggestions-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1.5px solid var(--theme-primary);
+  border-radius: 12px;
+  max-height: 230px;
+  overflow-y: auto;
+  z-index: 60;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+}
+
+.med-suggestion-item {
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.med-suggestion-item:hover {
+  background: var(--theme-soft-bg);
+}
+
+.med-suggestion-price {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--theme-dark);
+  background: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.pos-add-btn {
+  padding: 10px 16px;
+  height: 41px;
+  border-radius: 10px;
+  border: none;
+  background: var(--theme-primary);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.88rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pos-add-btn.green {
+  background: #16a34a;
+}
+
+/* POS Items Table */
+.pos-table-container {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  flex: 1;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.pos-table-header {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) 130px 100px 130px 130px 50px;
+  padding: 11px 16px;
+  background: #f1f5f9;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: #475569;
+}
+
+.pos-table-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) 130px 100px 130px 130px 50px;
+  padding: 12px 16px;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.pos-item-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.pos-item-badge.med {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.pos-item-badge.srv {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.pos-remove-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* Checkout & Manual Rounding Footer Bar */
+.pos-checkout-footer {
+  background: linear-gradient(135deg, #f8fafc 0%, #f0fdf4 100%);
+  border: 2px solid #86efac;
+  border-radius: 18px;
+  padding: 18px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.totals-comparison-group {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.calc-total-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.calc-total-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.calc-total-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #334155;
+}
+
+.final-override-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.final-total-input {
+  width: 190px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 2.5px solid #16a34a;
+  background: #ffffff;
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #064e3b;
+  outline: none;
+}
+
+.quick-round-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.round-pill-btn {
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+}
+
+.checkout-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.outdoor-submit-btn {
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: #fff1f2;
+  border: 2px solid #fda4af;
+  color: #be123c;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.outdoor-submit-btn:hover {
+  background: #ffe4e6;
+}
+
+.pos-grand-submit-btn {
+  padding: 18px 28px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  border: 2px solid #4ade80;
+  color: #ffffff;
+  font-size: 1.12rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.32);
+}
+
+/* ================= RECEIPT & SMS MODAL (SUMMARY TOTAL ONLY) ================= */
+.receipt-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.receipt-modal-card {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 560px;
+  padding: 28px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+}
+
+.printable-bill-sheet {
+  border: 2px dashed #94a3b8;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 18px 0;
+  background: #ffffff;
+  color: #000000;
+}
+
+.printable-bill-sheet.thermal-mode {
+  max-width: 320px;
+  margin: 18px auto;
+  font-family: 'Courier New', monospace;
+}
+
+.printable-bill-sheet.a4-mode {
+  max-width: 100%;
+  font-family: 'Inter', sans-serif;
+}
+
+/* PRINT MEDIA RULE: Hides Portal UI & Prints ONLY the Summary Bill */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-bill-sheet,
+  .printable-bill-sheet * {
+    visibility: visible;
+  }
+  .printable-bill-sheet {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: none;
+    margin: 0;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 1440px) {
+  .counter-workspace-grid {
+    grid-template-columns: 260px 330px minmax(0, 1fr);
+  }
+  .pos-dual-entry-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { SLIDER_IMAGES, useDashboardLogic } from './dashboardLogic';
 import './App.css';
 import DoctorPortal from './DoctorPortal';
+import CounterPortal from './CounterPortal';
 
 // Top Navigation Bar
 const TopNavbar = ({ currentTime, doctorOnline, counterOnline }) => (
@@ -244,7 +245,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/admin" element={<PlaceholderPage title="Admin Management Portal" />} />
         <Route path="/doctor" element={<DoctorPortal />} />
-        <Route path="/counter" element={<PlaceholderPage title="Front Desk Counter Portal" />} />
+        <Route path="/counter" element={<CounterPortal />} />
         <Route path="/grn" element={<PlaceholderPage title="Stock & GRN Inventory Portal" />} />
         <Route path="/queue" element={<PlaceholderPage title="Live Clinic Queue" />} />
       </Routes>
