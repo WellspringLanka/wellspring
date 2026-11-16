@@ -514,6 +514,10 @@ export function useCounterPortalLogic() {
     if (!regForm.name.trim()) {
       return showToast('Patient full name is required.', 'error');
     }
+    // NEW: Enforce mandatory phone number
+    if (!regForm.phone.trim()) {
+      return showToast('Mobile phone number is required.', 'error');
+    }
 
     setRegisteringPatient(true);
     try {

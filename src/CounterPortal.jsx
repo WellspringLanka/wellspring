@@ -1034,7 +1034,7 @@ export default function CounterPortal() {
                 </div>
 
                 <div className="counter-reg-group">
-                  <label className="counter-reg-label">Marital Status (Optional)</label>
+                  <label className="counter-reg-label">Marital Status *</label>
                   <div className="counter-reg-radio-box">
                     <label className="walkin-radio-label" style={{ fontSize: '0.95rem' }}>
                       <input
@@ -1060,7 +1060,7 @@ export default function CounterPortal() {
                 </div>
 
                 <div className="counter-reg-group">
-                  <label className="counter-reg-label">Mobile Phone Number (Optional)</label>
+                  <label className="counter-reg-label">Mobile Phone Number *</label>
                   <input
                     type="text"
                     className="counter-reg-input"
