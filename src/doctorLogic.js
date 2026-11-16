@@ -28,7 +28,14 @@ export function formatClearDate(dateString) {
   if (!dateString) return 'Not Recorded';
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return dateString;
-  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  
+  // FIX: Force browser to ignore UTC and strictly render in Sri Lanka Time
+  return new Intl.DateTimeFormat('en-GB', { 
+    timeZone: 'Asia/Colombo',
+    day: '2-digit', 
+    month: 'short', 
+    year: 'numeric' 
+  }).format(date);
 }
 
 export function useDoctorPortalLogic() {
