@@ -862,9 +862,10 @@
   gap: 18px;
 }
 
+/* 2-Column KPI Grid for Today's Log (Without Revenue) */
 .today-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
 }
 
@@ -983,3 +984,34 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Live Topbar System Clock (Shared by Counter & Doctor Portals) */
+.topbar-live-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #f8fafc;
+  font-family: 'Inter', monospace, sans-serif;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+/* Green "SMS Sent!" Confirmation Box inside Receipt Modal */
+.sms-sent-success-banner {
+  background: #dcfce7;
+  border: 2px solid #22c55e;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: #065f46;
+}
+

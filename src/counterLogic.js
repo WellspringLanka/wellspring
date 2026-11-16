@@ -4,6 +4,27 @@ import { DOCTOR_THEMES, calculateAge } from './doctorLogic';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+// Format live Sri Lanka Clock (Asia/Colombo)
+export function getFormattedSriLankaClock() {
+  const now = new Date();
+  const timePart = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Colombo',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  }).format(now);
+
+  const datePart = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Colombo',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  }).format(now);
+
+  return `${datePart} • ${timePart}`;
+}
+
 function playDoctorBellSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -27,6 +48,7 @@ function playDoctorBellSound() {
 export function printReceiptDocument(billObj, format = 'thermal') {
   if (!billObj) return;
   const isThermal = format === 'thermal';
+  const displayReceiptNo = billObj.daily_bill_no || billObj.bill_id || 1;
 
   const printWindow = window.open('', '_blank', 'width=450,height=650');
   if (!printWindow) {
@@ -46,7 +68,7 @@ export function printReceiptDocument(billObj, format = 'thermal') {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Wellspring Receipt #${billObj.bill_id}</title>
+        <title>Wellspring Receipt #${displayReceiptNo}</title>
         <link href="https://fonts.googleapis.com/css2?family=Tangerine:wght@700&display=swap" rel="stylesheet">
         <style>
           ${pageSizeRule}
@@ -67,7 +89,7 @@ export function printReceiptDocument(billObj, format = 'thermal') {
       <body>
         <div class="brand">Wellspring</div>
         <div class="sub">Medical Center &amp; Dispensary</div>
-        <div class="receipt-no">Official Receipt #${billObj.bill_id}</div>
+        <div class="receipt-no">Official Receipt #${displayReceiptNo}</div>
 
         <div class="meta-row">
           <span class="meta-label">Date:</span>
@@ -117,6 +139,16 @@ export function printReceiptDocument(billObj, format = 'thermal') {
 }
 
 export function useCounterPortalLogic() {
+  // Live Sri Lanka System Clock
+  const [currentClock, setCurrentClock] = useState(() => getFormattedSriLankaClock());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentClock(getFormattedSriLankaClock());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // 1. Theme Selector
   const [activeTheme, setActiveTheme] = useState(() => {
     return localStorage.getItem('wellspring_counter_theme') || 'teal';
@@ -168,15 +200,16 @@ export function useCounterPortalLogic() {
   const [manualFinalTotal, setManualFinalTotal] = useState('');
   const [isManualTotalEdited, setIsManualTotalEdited] = useState(false);
 
-  // 9. Completed Bill Modal + SMS Confirmation & Edit State
+  // 9. Completed Bill Modal + SMS Confirmation & Sent State
   const [completedBillModal, setCompletedBillModal] = useState(null);
-  const [printFormat, setPrintFormat] = useState('thermal'); // 'thermal' | 'a4'
+  const [printFormat, setPrintFormat] = useState('thermal');
   const [submittingCheckout, setSubmittingCheckout] = useState(false);
 
   const [showSmsConfirmBox, setShowSmsConfirmBox] = useState(false);
   const [smsPhoneInput, setSmsPhoneInput] = useState('');
   const [isEditingSmsPhone, setIsEditingSmsPhone] = useState(false);
   const [sendingSms, setSendingSms] = useState(false);
+  const [smsSentStatus, setSmsSentStatus] = useState(null); // Holds sent status so cashier sees "SMS Sent!"
 
   // 10. Today's Log State
   const [todayLogList, setTodayLogList] = useState([]);
@@ -222,7 +255,6 @@ export function useCounterPortalLogic() {
     setBillItems([]);
   };
 
-  // Load Medicines & Clinic Services Catalog
   const fetchCatalog = useCallback(async () => {
     if (!loggedInStaff) return;
     try {
@@ -239,7 +271,6 @@ export function useCounterPortalLogic() {
     }
   }, [loggedInStaff, selectedServiceId]);
 
-  // Fetch Incoming Doctor Prescriptions (flag = 2)
   const fetchPrescriptions = useCallback(async () => {
     if (!loggedInStaff) return;
     setLoadingPrescriptions(true);
@@ -260,7 +291,6 @@ export function useCounterPortalLogic() {
     }
   }, [loggedInStaff]);
 
-  // Fetch Today's Log
   const fetchTodayLog = useCallback(async () => {
     if (!loggedInStaff) return;
     setLoadingTodayLog(true);
@@ -280,7 +310,6 @@ export function useCounterPortalLogic() {
     }
   }, [loggedInStaff, activePage, fetchTodayLog]);
 
-  // Poll for Doctor Bell & New Prescriptions every 4 seconds
   useEffect(() => {
     if (!loggedInStaff) return;
     fetchCatalog();
@@ -301,7 +330,7 @@ export function useCounterPortalLogic() {
           sessionStorage.setItem('last_seen_bell_id', String(latestBell.id));
         }
       } catch {
-        // Ignore polling network hiccups
+        // Ignore polling hiccups
       }
     }, 4000);
 
@@ -339,7 +368,6 @@ export function useCounterPortalLogic() {
     setShowMedDropdown(false);
   };
 
-  // Add Medicine to POS Bill (+ Auto-Update Price in DB if changed)
   const handleAddMedicineToBill = async (e) => {
     if (e) e.preventDefault();
     const cleanName = medSearchText.trim();
@@ -477,30 +505,27 @@ export function useCounterPortalLogic() {
     setManualFinalTotal(String(rounded.toFixed(2)));
   };
 
-  // Open Receipt Modal (used by both new checkouts AND "Today's Log" reprints)
   const openReceiptModalWithData = (billModalObj) => {
     setCompletedBillModal(billModalObj);
     setSmsPhoneInput(billModalObj.patient_phone || '');
     setShowSmsConfirmBox(false);
     setIsEditingSmsPhone(false);
+    setSmsSentStatus(null);
   };
 
-  // Complete Checkout OR Mark as Outdoor Prescription
   const handleFinalizeCheckout = async (mode = 'COMPLETED_BILL') => {
-    const combinedNames =
-      activePrescriptionCards.length > 0
-        ? activePrescriptionCards.map(c => c.patient.name).join(', ')
-        : customWalkInName.trim() || 'Walk-In Patient';
+    const isRegisteredPatient = activePrescriptionCards.length > 0;
+    const combinedNames = isRegisteredPatient
+      ? activePrescriptionCards.map(c => c.patient.name).join(', ')
+      : customWalkInName.trim() || 'Walk-In Patient';
 
-    const primaryPhone =
-      activePrescriptionCards.length > 0
-        ? activePrescriptionCards[0].patient.phone || ''
-        : customWalkInPhone.trim();
+    const primaryPhone = isRegisteredPatient
+      ? activePrescriptionCards[0].patient.phone || ''
+      : customWalkInPhone.trim();
 
-    const doctorName =
-      activePrescriptionCards.length > 0
-        ? activePrescriptionCards[0].doctor_name
-        : 'Wellspring Physician';
+    const doctorName = isRegisteredPatient
+      ? activePrescriptionCards[0].doctor_name
+      : 'Wellspring Physician';
 
     const finalPayable = mode === 'OUTDOOR_RX' && billItems.length === 0
       ? 0
@@ -521,18 +546,24 @@ export function useCounterPortalLogic() {
       });
 
       if (mode === 'OUTDOOR_RX') {
-        showToast(`Marked ${combinedNames} as Outdoor Prescription & removed from queue.`);
+        showToast(`Marked ${combinedNames} as Outdoor Medicine & removed from queue.`);
       } else {
+        const slNowStr = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Asia/Colombo',
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }).format(new Date());
+
         openReceiptModalWithData({
           bill_id: res.data.bill.id,
+          daily_bill_no: res.data.bill.daily_bill_no || 1,
           ticket_ids: selectedTicketIds,
-          date_str: new Date().toLocaleString('en-GB', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          }),
+          is_walk_in: !isRegisteredPatient,
+          date_str: slNowStr,
           patient_names: combinedNames,
           patient_phone: primaryPhone,
           doctor_name: doctorName,
@@ -558,17 +589,23 @@ export function useCounterPortalLogic() {
 
   // Reprint a Bill from "Today's Log"
   const handleReprintFromTodayLog = (logRow) => {
-    const formattedDate = new Date(logRow.created_at).toLocaleString('en-GB', {
+    const formattedDate = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Colombo',
       day: '2-digit',
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
-    });
+      minute: '2-digit',
+      hour12: true
+    }).format(new Date(logRow.created_at));
+
+    const hasTickets = Array.isArray(logRow.ticket_ids) && logRow.ticket_ids.length > 0;
 
     openReceiptModalWithData({
       bill_id: logRow.id,
+      daily_bill_no: logRow.daily_bill_no || logRow.id,
       ticket_ids: logRow.ticket_ids || [],
+      is_walk_in: !hasTickets,
       date_str: formattedDate,
       patient_names: logRow.patient_names,
       patient_phone: logRow.patient_phone || '',
@@ -578,12 +615,12 @@ export function useCounterPortalLogic() {
     });
   };
 
-  // Step 1 of SMS: Open the Phone Number Confirmation Box inside the Modal
+  // Step 1 of SMS: Open the Phone Number Confirmation Box
   const handleInitiateSmsFlow = () => {
     if (!completedBillModal) return;
     setSmsPhoneInput(completedBillModal.patient_phone || '');
     setShowSmsConfirmBox(true);
-    // If the patient has no phone recorded yet, automatically open in Edit mode
+    setSmsSentStatus(null);
     if (!completedBillModal.patient_phone) {
       setIsEditingSmsPhone(true);
     } else {
@@ -591,7 +628,7 @@ export function useCounterPortalLogic() {
     }
   };
 
-  // Step 2 of SMS: Confirm & Dispatch SMS (and save updated number to DB)
+  // Step 2 of SMS: Confirm & Dispatch SMS -> Turns into "SMS Sent!" state
   const handleConfirmAndSendSms = async () => {
     if (!completedBillModal) return;
     const cleanPhone = smsPhoneInput.trim();
@@ -603,6 +640,7 @@ export function useCounterPortalLogic() {
     try {
       const res = await axios.post(`${API_BASE}/counter/send-sms`, {
         bill_id: completedBillModal.bill_id,
+        daily_bill_no: completedBillModal.daily_bill_no,
         ticket_ids: completedBillModal.ticket_ids || [],
         phone: cleanPhone,
         patient_names: completedBillModal.patient_names,
@@ -610,16 +648,22 @@ export function useCounterPortalLogic() {
         date_str: completedBillModal.date_str
       });
 
-      // Update modal & Today's Log state with the confirmed phone number
+      if (res.data.success === false && res.data.gateway_warning) {
+        showToast(res.data.gateway_warning, 'error');
+        return;
+      }
+
       setCompletedBillModal(prev => (prev ? { ...prev, patient_phone: cleanPhone } : prev));
       setIsEditingSmsPhone(false);
-      fetchTodayLog();
 
-      if (res.data.mode === 'LIVE_DIALOG_SMS') {
-        showToast(`Dialog SMS Bill sent to ${cleanPhone}!`);
-      } else {
-        showToast(`SMS Bill confirmed & dispatched to ${cleanPhone} (Number saved to DB)!`);
-      }
+      // Set clear visual confirmation state inside modal
+      setSmsSentStatus({
+        phone: cleanPhone,
+        savedToProfile: Boolean(res.data.updatedPatientProfile)
+      });
+
+      fetchTodayLog();
+      showToast(`SMS Receipt sent to ${cleanPhone}!`);
     } catch (err) {
       showToast(err.response?.data?.error || 'Failed to send SMS bill.', 'error');
     } finally {
@@ -627,7 +671,6 @@ export function useCounterPortalLogic() {
     }
   };
 
-  // Today's Log Filtered List & Financial Summary
   const filteredTodayLog = useMemo(() => {
     const q = todayLogSearch.trim().toLowerCase();
     if (!q) return todayLogList;
@@ -635,12 +678,11 @@ export function useCounterPortalLogic() {
       row =>
         (row.patient_names || '').toLowerCase().includes(q) ||
         (row.patient_phone || '').toLowerCase().includes(q) ||
-        String(row.id).includes(q)
+        String(row.daily_bill_no || row.id).includes(q)
     );
   }, [todayLogList, todayLogSearch]);
 
   const todaySummary = useMemo(() => {
-    let totalRevenue = 0;
     let paidPatientsCount = 0;
     let outdoorCount = 0;
 
@@ -649,16 +691,16 @@ export function useCounterPortalLogic() {
         outdoorCount += 1;
       } else {
         paidPatientsCount += 1;
-        totalRevenue += Number(row.final_total) || 0;
       }
     });
 
-    return { totalRevenue, paidPatientsCount, outdoorCount, totalVisits: todayLogList.length };
+    return { paidPatientsCount, outdoorCount, totalVisits: todayLogList.length };
   }, [todayLogList]);
 
   return {
     DOCTOR_THEMES,
     calculateAge,
+    currentClock,
     activeTheme,
     setActiveTheme,
     loggedInStaff,
@@ -727,6 +769,8 @@ export function useCounterPortalLogic() {
     isEditingSmsPhone,
     setIsEditingSmsPhone,
     sendingSms,
+    smsSentStatus,
+    setSmsSentStatus,
     handleInitiateSmsFlow,
     handleConfirmAndSendSms,
     todayLogList,
