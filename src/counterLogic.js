@@ -436,7 +436,7 @@ export function useCounterPortalLogic() {
       } catch {
         // Ignore polling hiccups
       }
-    }, 4000);
+    }, 1500);
 
     return () => clearInterval(pollInterval);
   }, [loggedInStaff, fetchCatalog, fetchPrescriptions, fetchActiveWaitingQueue, fetchTodayLog, lastSeenBellId]);

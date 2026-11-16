@@ -8,7 +8,6 @@ import {
 import './DoctorPortal.css';
 
 export default function DoctorPortal() {
-  // CORRECTED: Added advancedSearch, setAdvancedSearch, and bellCooldown here
   const {
     activeTheme,
     setActiveTheme,
@@ -41,12 +40,8 @@ export default function DoctorPortal() {
     activeTicketId,
     loadingProfile,
     selectPatientForConsultation,
-    isEditingMarital,
-    setIsEditingMarital,
-    maritalValue,
-    setMaritalValue,
-    savingMarital,
-    handleSaveMaritalStatus,
+    isEditingMarital, setIsEditingMarital, maritalValue, setMaritalValue, savingMarital, handleSaveMaritalStatus,
+    isEditingGender, setIsEditingGender, genderValue, setGenderValue, savingGender, handleSaveGender,
     commonText,
     setCommonText,
     isEditingCommon,
@@ -71,7 +66,6 @@ export default function DoctorPortal() {
     statusBanner
   } = useDoctorPortalLogic();
 
-  // ================= 1. DOCTOR LOGIN SCREEN =================
   if (!loggedInDoctor) {
     return (
       <div className="doctor-login-wrapper">
@@ -82,9 +76,7 @@ export default function DoctorPortal() {
             <h1>Physician Sign In</h1>
             <p>Enter your clinical credentials to access patient consultations</p>
           </div>
-
           {loginError && <div className="login-error-msg">{loginError}</div>}
-
           <form onSubmit={handleDoctorLogin}>
             <div className="login-form-group">
               <label>Username</label>
@@ -98,7 +90,6 @@ export default function DoctorPortal() {
                 autoFocus
               />
             </div>
-
             <div className="login-form-group">
               <label>Password</label>
               <input
@@ -110,12 +101,10 @@ export default function DoctorPortal() {
                 onChange={(e) => setLoginPassword(e.target.value)}
               />
             </div>
-
             <button type="submit" disabled={loggingIn} className="login-submit-btn">
               {loggingIn ? 'Signing In...' : 'Sign In to Console'}
             </button>
           </form>
-
           <Link to="/" className="login-back-link">
             ← Return to Wellspring Main Page
           </Link>
@@ -124,27 +113,20 @@ export default function DoctorPortal() {
     );
   }
 
-  // ================= 2. MAIN CONSULTATION INTERFACE =================
   return (
     <div className={`doctor-portal-wrapper theme-${activeTheme}`}>
-      {/* TOP COLORED HEADER BAR */}
       <header className="doc-topbar">
         <div className="doc-topbar-left">
-          <Link to="/" className="doc-back-btn">
-            ← Home
-          </Link>
-
+          <Link to="/" className="doc-back-btn">← Home</Link>
           <div className="topbar-divider"></div>
-
           <div className="doc-identity-info">
             <h1 className="doc-name-heading">{loggedInDoctor.name}</h1>
             <span className="doc-specialty-tag">{loggedInDoctor.specialty}</span>
           </div>
         </div>
 
-        {/* TOP RIGHT: 4-COLOR THEME PICKER, CLASSY BELL & RED SIGN OUT */}
         <div className="doc-topbar-right">
-          <div className="theme-picker-group" title="Choose Portal Color Theme">
+          <div className="theme-picker-group">
             <span className="theme-picker-label">Theme</span>
             {DOCTOR_THEMES.map((t) => (
               <button
@@ -163,9 +145,8 @@ export default function DoctorPortal() {
             onClick={handleRingCounterBell}
             className={`bell-trigger-btn ${bellCooldown ? 'on-cooldown' : ''}`}
             disabled={bellCooldown}
-            title="Ring the alert bell at the Counter"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.8">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
@@ -178,17 +159,13 @@ export default function DoctorPortal() {
         </div>
       </header>
 
-      {/* FLOATING STATUS BANNER */}
       {statusBanner && (
         <div className={`doc-toast-banner ${statusBanner.type}`}>
           {statusBanner.message}
         </div>
       )}
 
-      {/* 3-SECTION WORKSPACE WITH EDGE SPACING */}
       <div className="doc-workspace-grid">
-        
-        {/* 1. LEFT SIDEBAR: BRAND BANNER + 3 SEPARATE BUTTONS + LIST */}
         <aside className="doc-sidebar-card">
           <div className="sidebar-brand-banner">
             <div className="sidebar-banner-photo"></div>
@@ -224,7 +201,6 @@ export default function DoctorPortal() {
           </div>
 
           <div className="sidebar-body">
-            {/* TAB A: ACTIVE QUEUE */}
             {sidebarTab === 'queue' && (
               <div>
                 <div className="queue-header-row">
@@ -263,7 +239,6 @@ export default function DoctorPortal() {
               </div>
             )}
 
-            {/* TAB B: DIRECT ADVANCED PATIENT SEARCH */}
             {sidebarTab === 'search' && (
               <div>
                 <div className="advanced-search-grid">
@@ -356,7 +331,6 @@ export default function DoctorPortal() {
               </div>
             )}
 
-            {/* TAB C: DIRECT WALK-IN PATIENT REGISTRATION */}
             {sidebarTab === 'add' && (
               <form onSubmit={handleCreateWalkInPatient}>
                 <div className="walkin-form-grid">
@@ -503,7 +477,6 @@ export default function DoctorPortal() {
           </div>
         </aside>
 
-        {/* 2. MIDDLE SECTION: PATIENT CLINICAL PROFILE */}
         <main className="doc-middle-card">
           <div className="section-card-header">
             <h2 className="section-card-title">Patient Clinical Profile</h2>
@@ -550,15 +523,48 @@ export default function DoctorPortal() {
                 </div>
               </div>
 
-              {/* NEW SIDE-BY-SIDE SPLIT ROW */}
               <div className="split-field-row">
                 
-                {/* GENDER (FIXED) */}
+                {/* GENDER (EDITABLE) */}
                 <div className="stacked-field-block">
-                  <span className="stacked-field-label">Gender</span>
-                  <div className="stacked-field-value">
-                    {selectedPatient.gender === 1 ? 'Male' : selectedPatient.gender === 2 ? 'Female' : 'Not Specified'}
+                  <div className="editable-header-row">
+                    <span className="stacked-field-label">Gender</span>
+
+                    {!isEditingGender ? (
+                      <button
+                        type="button"
+                        className="edit-toggle-btn"
+                        onClick={() => setIsEditingGender(true)}
+                      >
+                        Edit
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={savingGender}
+                        className="edit-toggle-btn done-mode"
+                        onClick={handleSaveGender}
+                      >
+                        {savingGender ? 'Saving...' : 'Done'}
+                      </button>
+                    )}
                   </div>
+
+                  {!isEditingGender ? (
+                    <div className="stacked-field-value" style={{ marginTop: '4px' }}>
+                      {selectedPatient.gender === 1 ? 'Male' : selectedPatient.gender === 2 ? 'Female' : 'Not Specified'}
+                    </div>
+                  ) : (
+                    <select
+                      className="clinical-edit-select"
+                      value={genderValue}
+                      onChange={(e) => setGenderValue(e.target.value)}
+                      autoFocus
+                    >
+                      <option value="1">Male</option>
+                      <option value="2">Female</option>
+                    </select>
+                  )}
                 </div>
 
                 {/* MARITAL STATUS (EDITABLE) */}
@@ -693,7 +699,6 @@ export default function DoctorPortal() {
           )}
         </main>
 
-        {/* 3. RIGHT SECTION: "TO COUNTER" PRESCRIPTION PANEL */}
         <aside className="doc-counter-handoff-card">
           <div className="to-counter-header">
             <h2 className="to-counter-title">To Counter</h2>
@@ -718,7 +723,6 @@ export default function DoctorPortal() {
               <label className="counter-form-label">
                 Doctor Remarks
               </label>
-              {/* Removed the subtext here */}
               <textarea
                 className="rx-remarks-textarea"
                 placeholder="Clinical remarks or diagnosis notes for this visit..."
@@ -739,7 +743,6 @@ export default function DoctorPortal() {
         </aside>
       </div>
 
-      {/* 4. BOTTOM SECTION: 4-COLUMN PRESCRIPTION LOG */}
       <section className="doc-history-section">
         <div className="doc-history-card">
           <div className="history-title-bar">
@@ -763,8 +766,8 @@ export default function DoctorPortal() {
             <div>
               <div className="history-grid-header">
                 <div>Visit Date</div>
-                <div>Prescription (channeling_master.general)</div>
-                <div>Doctor&apos;s Remarks (reason_remarks)</div>
+                <div>Prescription</div>
+                <div>Doctor&apos;s Remarks</div>
                 <div style={{ textAlign: 'center' }}>Quick Action</div>
               </div>
 
@@ -797,7 +800,6 @@ export default function DoctorPortal() {
                         type="button"
                         className="repeat-rx-btn"
                         onClick={() => {
-                          // ONLY copies the prescription, ignores remarks
                           setPrescriptionText(item.general);
                         }}
                       >

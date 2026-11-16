@@ -63,10 +63,14 @@ export function useDoctorPortalLogic() {
   const [activeTicketId, setActiveTicketId] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
 
-  // Editable Marital Status State
   const [isEditingMarital, setIsEditingMarital] = useState(false);
   const [maritalValue, setMaritalValue] = useState('0');
   const [savingMarital, setSavingMarital] = useState(false);
+
+  // NEW: Editable Gender State
+  const [isEditingGender, setIsEditingGender] = useState(false);
+  const [genderValue, setGenderValue] = useState('1');
+  const [savingGender, setSavingGender] = useState(false);
 
   const [commonText, setCommonText] = useState('');
   const [isEditingCommon, setIsEditingCommon] = useState(false);
@@ -137,6 +141,7 @@ export function useDoctorPortalLogic() {
     setIsEditingCommon(false);
     setIsEditingAllergies(false);
     setIsEditingMarital(false);
+    setIsEditingGender(false);
     setActiveTicketId(ticketId);
 
     try {
@@ -144,15 +149,15 @@ export function useDoctorPortalLogic() {
       const { patient, allergiesAndReports, prescriptionHistory: history } = res.data;
       setSelectedPatient(patient);
       
-      // Load Marital Status correctly
       setMaritalValue(patient.married ? patient.married.toString() : '0');
-      
+      setGenderValue(patient.gender ? patient.gender.toString() : '1');
       setCommonText(patient.common || '');
       setAllergiesText(allergiesAndReports || '');
       setPrescriptionHistory(history || []);
     } catch (err) {
       setSelectedPatient(patientObj);
       setMaritalValue(patientObj.married ? patientObj.married.toString() : '0');
+      setGenderValue(patientObj.gender ? patientObj.gender.toString() : '1');
       setCommonText(patientObj.common || '');
       setAllergiesText('');
       setPrescriptionHistory([]);
@@ -206,7 +211,6 @@ export function useDoctorPortalLogic() {
     }
   };
 
-  // Save Marital Status
   const handleSaveMaritalStatus = async () => {
     if (!selectedPatient) return;
     setSavingMarital(true);
@@ -215,11 +219,20 @@ export function useDoctorPortalLogic() {
       setSelectedPatient(prev => ({ ...prev, married: Number(maritalValue) }));
       setIsEditingMarital(false);
       showToast('Marital status updated successfully.');
-    } catch (err) {
-      showToast('Failed to update marital status.', 'error');
-    } finally {
-      setSavingMarital(false);
-    }
+    } catch (err) { showToast('Failed to update marital status.', 'error'); } 
+    finally { setSavingMarital(false); }
+  };
+
+  const handleSaveGender = async () => {
+    if (!selectedPatient) return;
+    setSavingGender(true);
+    try {
+      await axios.put(`${API_BASE}/patients/${selectedPatient.id}/gender`, { gender: genderValue });
+      setSelectedPatient(prev => ({ ...prev, gender: Number(genderValue) }));
+      setIsEditingGender(false);
+      showToast('Gender updated successfully.');
+    } catch (err) { showToast('Failed to update gender.', 'error'); } 
+    finally { setSavingGender(false); }
   };
 
   const handleSaveCommonDetails = async () => {
@@ -230,11 +243,8 @@ export function useDoctorPortalLogic() {
       setSelectedPatient(prev => ({ ...prev, common: commonText }));
       setIsEditingCommon(false);
       showToast('Common details updated.');
-    } catch (err) {
-      showToast('Failed to update details.', 'error');
-    } finally {
-      setSavingCommon(false);
-    }
+    } catch (err) { showToast('Failed to update details.', 'error'); } 
+    finally { setSavingCommon(false); }
   };
 
   const handleSaveAllergiesReports = async () => {
@@ -245,13 +255,11 @@ export function useDoctorPortalLogic() {
       if (res.data.ticket_id && !activeTicketId) setActiveTicketId(res.data.ticket_id);
       setIsEditingAllergies(false);
       showToast('Allergies and reports updated.');
-    } catch (err) {
-      showToast('Failed to update allergies.', 'error');
-    } finally {
-      setSavingAllergies(false);
-    }
+    } catch (err) { showToast('Failed to update allergies.', 'error'); } 
+    finally { setSavingAllergies(false); }
   };
 
+  // FIX: Reset the screen to "No Patient Selected" upon submit
   const handleSubmitPrescription = async (e) => {
     if (e) e.preventDefault();
     if (!selectedPatient || !loggedInDoctor) return showToast('Please select a patient first.', 'error');
@@ -264,7 +272,14 @@ export function useDoctorPortalLogic() {
       });
       showToast(`Prescription sent to Counter for ${selectedPatient.name}.`);
       setPrescriptionText(''); setRemarksText(''); sessionStorage.removeItem('draft_rx_general');
-      await selectPatientForConsultation(selectedPatient, activeTicketId);
+      
+      // CLEAR SCREEN TO EMPTY STATE
+      setSelectedPatient(null);
+      setActiveTicketId(null);
+      setCommonText('');
+      setAllergiesText('');
+      setPrescriptionHistory([]);
+
       await fetchQueue();
     } catch (err) {
       showToast('Failed to submit prescription.', 'error');
@@ -293,6 +308,7 @@ export function useDoctorPortalLogic() {
     newPatientForm, setNewPatientForm, creatingPatient, handleCreateWalkInPatient, selectedPatient, activeTicketId, loadingProfile, 
     selectPatientForConsultation, 
     isEditingMarital, setIsEditingMarital, maritalValue, setMaritalValue, savingMarital, handleSaveMaritalStatus,
+    isEditingGender, setIsEditingGender, genderValue, setGenderValue, savingGender, handleSaveGender,
     commonText, setCommonText, isEditingCommon, setIsEditingCommon, savingCommon, handleSaveCommonDetails, 
     allergiesText, setAllergiesText, isEditingAllergies, setIsEditingAllergies, savingAllergies, handleSaveAllergiesReports, 
     prescriptionText, setPrescriptionText, remarksText, setRemarksText, submittingRx, handleSubmitPrescription, prescriptionHistory, 
