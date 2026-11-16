@@ -36,14 +36,14 @@
 
 .counter-nav-btn {
   width: 100%;
-  padding: 14px 16px;
+  padding: 13px 16px;
   border-radius: 14px;
   background: #ffffff;
   border: 1.5px solid #cbd5e1;
   color: #334155;
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -66,7 +66,7 @@
 }
 
 .nav-badge-pill {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 800;
   padding: 3px 10px;
   border-radius: 999px;
@@ -81,10 +81,10 @@
 
 .counter-sidebar-footer {
   margin-top: auto;
-  padding: 18px 16px;
+  padding: 16px;
   background: #f1f5f9;
   border-top: 1px solid #e2e8f0;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: #475569;
   line-height: 1.5;
 }
@@ -118,7 +118,7 @@
   100% { transform: scale(1.06); }
 }
 
-/* 2. MIDDLE COLUMN: INCOMING DOCTOR PRESCRIPTIONS & FAMILY SELECTOR */
+/* 2. MIDDLE COLUMN: INCOMING DOCTOR PRESCRIPTIONS */
 .counter-rx-tray-card {
   background: #ffffff;
   border: 1.5px solid #dbe4f0;
@@ -242,7 +242,6 @@
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
 }
 
-/* Active Family Prescription Display Strip inside POS */
 .pos-active-rx-banner {
   background: #f0fdfa;
   border: 1.5px solid #99f6e4;
@@ -279,7 +278,6 @@
   line-height: 1.45;
 }
 
-/* Dual POS Entry Grid: Left = Medicines (with Qty), Right = Clinic Fees (No Qty) */
 .pos-dual-entry-grid {
   display: grid;
   grid-template-columns: 1.35fr 1fr;
@@ -349,7 +347,6 @@
   box-shadow: 0 0 0 3px var(--theme-soft-bg);
 }
 
-/* Autocomplete Dropdown Menu */
 .med-autocomplete-wrap {
   position: relative;
 }
@@ -583,65 +580,399 @@
   box-shadow: 0 10px 24px rgba(22, 163, 74, 0.32);
 }
 
-/* ================= RECEIPT & SMS MODAL (SUMMARY TOTAL ONLY) ================= */
+/* ================= UPGRADED RECEIPT & SMS MODAL (DARK-MODE SAFE) ================= */
 .receipt-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(4px);
   z-index: 999;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 20px;
+  color-scheme: light;
 }
 
 .receipt-modal-card {
   background: #ffffff;
-  border-radius: 20px;
+  color: #0f172a; /* Strictly dark text even in system Dark Mode */
+  border-radius: 22px;
   width: 100%;
-  max-width: 560px;
-  padding: 28px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  max-width: 580px;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 26px 28px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+  border: 1.5px solid #cbd5e1;
 }
 
+.receipt-modal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1.5px solid #e2e8f0;
+}
+
+.receipt-modal-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a !important;
+  letter-spacing: -0.2px;
+}
+
+.receipt-modal-close-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 1.2rem;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Segmented Bar for 80mm POS vs A4 Format (Never Overflows) */
+.receipt-format-switcher {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: #f1f5f9;
+  padding: 6px;
+  border-radius: 14px;
+  margin-top: 14px;
+}
+
+.format-tab-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.format-tab-btn.active {
+  background: var(--theme-primary);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+}
+
+/* Clean, Unclumped Receipt Preview Card */
 .printable-bill-sheet {
   border: 2px dashed #94a3b8;
-  border-radius: 12px;
-  padding: 24px;
-  margin: 18px 0;
+  border-radius: 16px;
+  padding: 22px 24px;
+  margin: 16px auto;
   background: #ffffff;
-  color: #000000;
+  color: #0f172a !important;
 }
 
 .printable-bill-sheet.thermal-mode {
-  max-width: 320px;
-  margin: 18px auto;
-  font-family: 'Courier New', monospace;
+  max-width: 360px;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 .printable-bill-sheet.a4-mode {
   max-width: 100%;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
-/* PRINT MEDIA RULE: Hides Portal UI & Prints ONLY the Summary Bill */
-@media print {
-  body * {
-    visibility: hidden;
-  }
-  .printable-bill-sheet,
-  .printable-bill-sheet * {
-    visibility: visible;
-  }
-  .printable-bill-sheet {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 100%;
-    border: none;
-    margin: 0;
-    padding: 16px;
-  }
+.receipt-brand-header {
+  text-align: center;
+  border-bottom: 1.5px solid #cbd5e1;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+}
+
+.receipt-brand-script {
+  font-family: 'Tangerine', cursive;
+  font-size: 3.4rem;
+  font-weight: 700;
+  color: #0f766e;
+  line-height: 0.9;
+  margin-bottom: 6px;
+}
+
+.receipt-brand-sub {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: #334155;
+}
+
+.receipt-no-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #0f172a;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.receipt-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.receipt-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.receipt-meta-label {
+  font-weight: 700;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.receipt-meta-value {
+  font-weight: 800;
+  color: #0f172a;
+  text-align: right;
+  word-break: break-word;
+}
+
+.receipt-summary-box {
+  background: #f8fafc;
+  border-top: 2px dashed #94a3b8;
+  border-bottom: 2px dashed #94a3b8;
+  padding: 16px 14px;
+  margin: 16px 0;
+}
+
+.receipt-summary-note {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 10px;
+}
+
+.receipt-grand-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #065f46;
+}
+
+.receipt-footer-note {
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.55;
+  margin-top: 12px;
+}
+
+/* SMS PHONE CONFIRMATION & EDIT PANEL INSIDE MODAL */
+.sms-confirm-drawer {
+  background: #f0fdfa;
+  border: 2px solid #5eead4;
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-top: 14px;
+}
+
+.sms-confirm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.sms-confirm-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #0f766e;
+}
+
+.sms-phone-display-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #ffffff;
+  border: 1.5px solid #99f6e4;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.sms-phone-number-text {
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.5px;
+}
+
+.sms-edit-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #0d9488;
+  background: #ffffff;
+  color: #0f766e;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sms-edit-btn:hover {
+  background: #ccfbf1;
+}
+
+.receipt-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* ================= 4. TODAY'S LOG SUB-PAGE ================= */
+.today-log-container {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.today-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.today-kpi-card {
+  background: #ffffff;
+  border: 1.5px solid #dbe4f0;
+  border-top: 5px solid var(--theme-primary);
+  border-radius: 18px;
+  padding: 18px 22px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+}
+
+.today-kpi-card.revenue {
+  border-top-color: #16a34a;
+  background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+}
+
+.today-kpi-card.outdoor {
+  border-top-color: #f59e0b;
+}
+
+.today-kpi-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: #64748b;
+}
+
+.today-kpi-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-top: 6px;
+}
+
+.today-log-table-card {
+  background: #ffffff;
+  border: 1.5px solid #dbe4f0;
+  border-radius: 20px;
+  padding: 22px 26px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+}
+
+.today-log-header-row {
+  display: grid;
+  grid-template-columns: 90px 130px minmax(0, 1.5fr) 140px 140px 140px 160px;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f1f5f9;
+  border-radius: 12px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.today-log-item-row {
+  display: grid;
+  grid-template-columns: 90px 130px minmax(0, 1.5fr) 140px 140px 140px 160px;
+  gap: 12px;
+  padding: 14px 16px;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.today-log-item-row:hover {
+  background: #f8fafc;
+}
+
+.log-status-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.log-status-pill.paid {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.log-status-pill.outdoor {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.reprint-action-btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--theme-primary);
+  background: var(--theme-soft-bg);
+  color: var(--theme-dark);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.reprint-action-btn:hover {
+  background: var(--theme-primary);
+  color: #ffffff;
 }
 
 @media (max-width: 1440px) {

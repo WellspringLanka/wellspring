@@ -4,15 +4,14 @@ import { DOCTOR_THEMES, calculateAge } from './doctorLogic';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Sound synthesizer for the Doctor Bell alert (works without external MP3 files)
 function playDoctorBellSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, ctx.currentTime); // A5 chime
-    osc.frequency.setValueAtTime(1174.66, ctx.currentTime + 0.18); // D6 chime
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1174.66, ctx.currentTime + 0.18);
     gain.gain.setValueAtTime(0.25, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.9);
     osc.connect(gain);
@@ -24,8 +23,101 @@ function playDoctorBellSound() {
   }
 }
 
+// Dedicated Print Engine for True 80mm Thermal POS Printer vs A4 Sheet
+export function printReceiptDocument(billObj, format = 'thermal') {
+  if (!billObj) return;
+  const isThermal = format === 'thermal';
+
+  const printWindow = window.open('', '_blank', 'width=450,height=650');
+  if (!printWindow) {
+    alert('Please allow pop-ups in your browser to print receipts.');
+    return;
+  }
+
+  const pageSizeRule = isThermal
+    ? '@page { size: 80mm auto; margin: 0mm; }'
+    : '@page { size: A4 portrait; margin: 18mm; }';
+
+  const bodyStyles = isThermal
+    ? `width: 72mm; margin: 0 auto; padding: 4mm 2mm; font-family: 'Courier New', monospace; color: #000;`
+    : `width: 100%; max-width: 680px; margin: 0 auto; padding: 24px; font-family: 'Segoe UI', Arial, sans-serif; color: #000; border: 1.5px solid #000; border-radius: 8px;`;
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Wellspring Receipt #${billObj.bill_id}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Tangerine:wght@700&display=swap" rel="stylesheet">
+        <style>
+          ${pageSizeRule}
+          * { box-sizing: border-box; }
+          body { ${bodyStyles} background: #fff; -webkit-print-color-adjust: exact; }
+          .brand { font-family: 'Tangerine', cursive; font-size: ${isThermal ? '42px' : '54px'}; font-weight: 700; text-align: center; line-height: 0.9; margin-bottom: 4px; }
+          .sub { text-align: center; font-size: ${isThermal ? '11px' : '14px'}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+          .receipt-no { text-align: center; font-size: ${isThermal ? '11px' : '13px'}; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1.5px dashed #000; }
+          .meta-row { display: flex; justify-content: space-between; font-size: ${isThermal ? '12px' : '15px'}; margin-bottom: 6px; gap: 10px; }
+          .meta-label { font-weight: 700; white-space: nowrap; }
+          .meta-val { text-align: right; word-break: break-word; }
+          .summary-box { border-top: 1.5px dashed #000; border-bottom: 1.5px dashed #000; padding: 12px 0; margin: 14px 0; }
+          .summary-line { display: flex; justify-content: space-between; font-size: ${isThermal ? '12px' : '15px'}; margin-bottom: 8px; }
+          .grand-total { display: flex; justify-content: space-between; font-size: ${isThermal ? '17px' : '22px'}; font-weight: 800; padding-top: 6px; }
+          .footer { text-align: center; font-size: ${isThermal ? '11px' : '13px'}; margin-top: 14px; line-height: 1.5; }
+        </style>
+      </head>
+      <body>
+        <div class="brand">Wellspring</div>
+        <div class="sub">Medical Center &amp; Dispensary</div>
+        <div class="receipt-no">Official Receipt #${billObj.bill_id}</div>
+
+        <div class="meta-row">
+          <span class="meta-label">Date:</span>
+          <span class="meta-val">${billObj.date_str}</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Patient(s):</span>
+          <span class="meta-val">${billObj.patient_names}</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Consultant:</span>
+          <span class="meta-val">${billObj.doctor_name}</span>
+        </div>
+
+        <div class="summary-box">
+          <div class="summary-line">
+            <span>Consultation &amp; Dispensary Charges</span>
+            <span>Included</span>
+          </div>
+          <div class="grand-total">
+            <span>TOTAL PAID</span>
+            <span>Rs. ${Number(billObj.final_total).toFixed(2)}</span>
+          </div>
+        </div>
+
+        <div class="footer">
+          Thank you for visiting Wellspring.<br/>
+          Wishing you a speedy recovery!
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+              window.close();
+            }, 250);
+          };
+        </script>
+      </body>
+    </html>
+  `;
+
+  printWindow.document.open();
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+}
+
 export function useCounterPortalLogic() {
-  // 1. Theme Selector (Synced with Clinical Teal default)
+  // 1. Theme Selector
   const [activeTheme, setActiveTheme] = useState(() => {
     return localStorage.getItem('wellspring_counter_theme') || 'teal';
   });
@@ -34,7 +126,7 @@ export function useCounterPortalLogic() {
     localStorage.setItem('wellspring_counter_theme', activeTheme);
   }, [activeTheme]);
 
-  // 2. Counter Staff Auth State (Login: 'counter' or 'desk', pass: '1234')
+  // 2. Counter Staff Auth State
   const [loggedInStaff, setLoggedInStaff] = useState(() => {
     const saved = sessionStorage.getItem('wellspring_counter_session');
     return saved ? JSON.parse(saved) : null;
@@ -44,10 +136,10 @@ export function useCounterPortalLogic() {
   const [loginError, setLoginError] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
 
-  // 3. Left Sidebar Page Navigation: 'pharmacy' | 'queue' | 'registration'
+  // 3. Left Sidebar Navigation: 'pharmacy' | 'today_log' | 'queue' | 'registration'
   const [activePage, setActivePage] = useState('pharmacy');
 
-  // 4. Incoming Prescriptions from Doctor (flag = 2) & Multi-Patient Family Selection
+  // 4. Incoming Prescriptions from Doctor (flag = 2)
   const [prescriptionQueue, setPrescriptionQueue] = useState([]);
   const [loadingPrescriptions, setLoadingPrescriptions] = useState(false);
   const [selectedTicketIds, setSelectedTicketIds] = useState([]);
@@ -66,7 +158,7 @@ export function useCounterPortalLogic() {
   const [medQty, setMedQty] = useState('1');
   const [updatingPriceInDb, setUpdatingPriceInDb] = useState(false);
 
-  // 7. Box B: Dispensary Service / Fee State (No Quantity)
+  // 7. Box B: Dispensary Service / Fee State
   const [selectedServiceId, setSelectedServiceId] = useState('');
   const [serviceCustomName, setServiceCustomName] = useState('');
   const [serviceFeeAmount, setServiceFeeAmount] = useState('');
@@ -76,12 +168,22 @@ export function useCounterPortalLogic() {
   const [manualFinalTotal, setManualFinalTotal] = useState('');
   const [isManualTotalEdited, setIsManualTotalEdited] = useState(false);
 
-  // 9. Checkout Receipt / SMS Modal State
+  // 9. Completed Bill Modal + SMS Confirmation & Edit State
   const [completedBillModal, setCompletedBillModal] = useState(null);
   const [printFormat, setPrintFormat] = useState('thermal'); // 'thermal' | 'a4'
   const [submittingCheckout, setSubmittingCheckout] = useState(false);
 
-  // 10. Live Doctor Bell Receiver Alert
+  const [showSmsConfirmBox, setShowSmsConfirmBox] = useState(false);
+  const [smsPhoneInput, setSmsPhoneInput] = useState('');
+  const [isEditingSmsPhone, setIsEditingSmsPhone] = useState(false);
+  const [sendingSms, setSendingSms] = useState(false);
+
+  // 10. Today's Log State
+  const [todayLogList, setTodayLogList] = useState([]);
+  const [loadingTodayLog, setLoadingTodayLog] = useState(false);
+  const [todayLogSearch, setTodayLogSearch] = useState('');
+
+  // 11. Live Doctor Bell Receiver Alert
   const [lastSeenBellId, setLastSeenBellId] = useState(() => {
     return Number(sessionStorage.getItem('last_seen_bell_id') || 0);
   });
@@ -90,7 +192,7 @@ export function useCounterPortalLogic() {
 
   const showToast = (message, type = 'success') => {
     setStatusBanner({ message, type });
-    setTimeout(() => setStatusBanner(null), 3500);
+    setTimeout(() => setStatusBanner(null), 4000);
   };
 
   // Login Handler
@@ -146,7 +248,6 @@ export function useCounterPortalLogic() {
       const list = res.data || [];
       setPrescriptionQueue(list);
 
-      // Auto-select first waiting patient if none selected
       setSelectedTicketIds(prev => {
         const validExisting = prev.filter(id => list.some(item => item.ticket_id === id));
         if (validExisting.length > 0) return validExisting;
@@ -159,11 +260,32 @@ export function useCounterPortalLogic() {
     }
   }, [loggedInStaff]);
 
+  // Fetch Today's Log
+  const fetchTodayLog = useCallback(async () => {
+    if (!loggedInStaff) return;
+    setLoadingTodayLog(true);
+    try {
+      const res = await axios.get(`${API_BASE}/counter/today-log`);
+      setTodayLogList(res.data || []);
+    } catch (err) {
+      console.error('Failed to load today log:', err.message);
+    } finally {
+      setLoadingTodayLog(false);
+    }
+  }, [loggedInStaff]);
+
+  useEffect(() => {
+    if (loggedInStaff && activePage === 'today_log') {
+      fetchTodayLog();
+    }
+  }, [loggedInStaff, activePage, fetchTodayLog]);
+
   // Poll for Doctor Bell & New Prescriptions every 4 seconds
   useEffect(() => {
     if (!loggedInStaff) return;
     fetchCatalog();
     fetchPrescriptions();
+    fetchTodayLog();
 
     const pollInterval = setInterval(async () => {
       fetchPrescriptions();
@@ -184,9 +306,8 @@ export function useCounterPortalLogic() {
     }, 4000);
 
     return () => clearInterval(pollInterval);
-  }, [loggedInStaff, fetchCatalog, fetchPrescriptions, lastSeenBellId]);
+  }, [loggedInStaff, fetchCatalog, fetchPrescriptions, fetchTodayLog, lastSeenBellId]);
 
-  // Select a single patient OR toggle multiple family members onto the same bill
   const handleSelectSinglePrescription = (ticketId) => {
     setSelectedTicketIds([ticketId]);
   };
@@ -203,7 +324,6 @@ export function useCounterPortalLogic() {
     return prescriptionQueue.filter(item => selectedTicketIds.includes(item.ticket_id));
   }, [prescriptionQueue, selectedTicketIds]);
 
-  // Filtered Medicine Suggestions for Autocomplete Dropdown
   const filteredMedicines = useMemo(() => {
     const q = medSearchText.trim().toLowerCase();
     if (!q) return medicinesCatalog.slice(0, 12);
@@ -219,7 +339,7 @@ export function useCounterPortalLogic() {
     setShowMedDropdown(false);
   };
 
-  // Add Medicine to POS Bill (+ Auto-Update Price in DB if changed or new!)
+  // Add Medicine to POS Bill (+ Auto-Update Price in DB if changed)
   const handleAddMedicineToBill = async (e) => {
     if (e) e.preventDefault();
     const cleanName = medSearchText.trim();
@@ -233,7 +353,6 @@ export function useCounterPortalLogic() {
       return showToast('Please enter a valid unit price.', 'error');
     }
 
-    // Check if price was edited or if this is a brand-new medicine
     const priceWasEdited =
       !selectedMedObj ||
       selectedMedObj.name.toLowerCase() !== cleanName.toLowerCase() ||
@@ -276,14 +395,12 @@ export function useCounterPortalLogic() {
       }
     ]);
 
-    // Reset Medicine Input for next rapid POS entry
     setMedSearchText('');
     setSelectedMedObj(null);
     setMedUnitPrice('');
     setMedQty('1');
   };
 
-  // Handle Clinic Service Dropdown Change
   const handleServiceSelectChange = (srvId) => {
     setSelectedServiceId(srvId);
     if (srvId === 'custom') {
@@ -297,7 +414,6 @@ export function useCounterPortalLogic() {
     }
   };
 
-  // Add Dispensary Service / Fee (No Quantity Needed)
   const handleAddServiceToBill = (e) => {
     if (e) e.preventDefault();
     const feeNum = parseFloat(serviceFeeAmount);
@@ -323,7 +439,7 @@ export function useCounterPortalLogic() {
         item_type: 'SERVICE',
         name: label,
         unit_price: feeNum,
-        qty: null, // Explicitly no quantity for consultation/inspection fees
+        qty: null,
         line_total: feeNum
       }
     ]);
@@ -339,12 +455,10 @@ export function useCounterPortalLogic() {
     setManualFinalTotal('');
   };
 
-  // Calculate System Total
   const calculatedTotal = useMemo(() => {
     return billItems.reduce((sum, item) => sum + (Number(item.line_total) || 0), 0);
   }, [billItems]);
 
-  // Keep Manual Final Total synced with Calculated Total unless manually overridden
   useEffect(() => {
     if (!isManualTotalEdited) {
       setManualFinalTotal(calculatedTotal > 0 ? String(calculatedTotal.toFixed(2)) : '0.00');
@@ -363,7 +477,15 @@ export function useCounterPortalLogic() {
     setManualFinalTotal(String(rounded.toFixed(2)));
   };
 
-  // Complete Checkout OR Mark as Outdoor Prescription ("Outdoor Rx / Leave")
+  // Open Receipt Modal (used by both new checkouts AND "Today's Log" reprints)
+  const openReceiptModalWithData = (billModalObj) => {
+    setCompletedBillModal(billModalObj);
+    setSmsPhoneInput(billModalObj.patient_phone || '');
+    setShowSmsConfirmBox(false);
+    setIsEditingSmsPhone(false);
+  };
+
+  // Complete Checkout OR Mark as Outdoor Prescription
   const handleFinalizeCheckout = async (mode = 'COMPLETED_BILL') => {
     const combinedNames =
       activePrescriptionCards.length > 0
@@ -401,9 +523,9 @@ export function useCounterPortalLogic() {
       if (mode === 'OUTDOOR_RX') {
         showToast(`Marked ${combinedNames} as Outdoor Prescription & removed from queue.`);
       } else {
-        // Open Receipt / Print / SMS Modal
-        setCompletedBillModal({
+        openReceiptModalWithData({
           bill_id: res.data.bill.id,
+          ticket_ids: selectedTicketIds,
           date_str: new Date().toLocaleString('en-GB', {
             day: '2-digit',
             month: 'short',
@@ -419,7 +541,6 @@ export function useCounterPortalLogic() {
         });
       }
 
-      // Clear active cart & refresh waiting prescriptions
       setBillItems([]);
       setIsManualTotalEdited(false);
       setManualFinalTotal('0.00');
@@ -427,6 +548,7 @@ export function useCounterPortalLogic() {
       setCustomWalkInPhone('');
       setSelectedTicketIds([]);
       await fetchPrescriptions();
+      await fetchTodayLog();
     } catch {
       showToast('Failed to complete transaction. Check backend connection.', 'error');
     } finally {
@@ -434,17 +556,105 @@ export function useCounterPortalLogic() {
     }
   };
 
-  // Send SMS Bill Summary (Summary Total Only)
-  const handleSendSmsBill = (billObj) => {
-    if (!billObj) return;
-    const smsText = `Wellspring Dispensary Receipt\nPatient: ${billObj.patient_names}\nDate: ${billObj.date_str}\nTotal Paid: Rs. ${Number(billObj.final_total).toFixed(2)}\nThank you for visiting Wellspring Medical Center.`;
-    navigator.clipboard?.writeText(smsText);
-    showToast(
-      billObj.patient_phone
-        ? `SMS Bill dispatched to ${billObj.patient_phone} (and copied to clipboard)!`
-        : 'SMS Bill formatted and copied to clipboard!'
-    );
+  // Reprint a Bill from "Today's Log"
+  const handleReprintFromTodayLog = (logRow) => {
+    const formattedDate = new Date(logRow.created_at).toLocaleString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    openReceiptModalWithData({
+      bill_id: logRow.id,
+      ticket_ids: logRow.ticket_ids || [],
+      date_str: formattedDate,
+      patient_names: logRow.patient_names,
+      patient_phone: logRow.patient_phone || '',
+      doctor_name: logRow.doctor_name || 'Consulting Physician',
+      final_total: logRow.final_total,
+      staff_name: logRow.created_by || 'Counter'
+    });
   };
+
+  // Step 1 of SMS: Open the Phone Number Confirmation Box inside the Modal
+  const handleInitiateSmsFlow = () => {
+    if (!completedBillModal) return;
+    setSmsPhoneInput(completedBillModal.patient_phone || '');
+    setShowSmsConfirmBox(true);
+    // If the patient has no phone recorded yet, automatically open in Edit mode
+    if (!completedBillModal.patient_phone) {
+      setIsEditingSmsPhone(true);
+    } else {
+      setIsEditingSmsPhone(false);
+    }
+  };
+
+  // Step 2 of SMS: Confirm & Dispatch SMS (and save updated number to DB)
+  const handleConfirmAndSendSms = async () => {
+    if (!completedBillModal) return;
+    const cleanPhone = smsPhoneInput.trim();
+    if (!cleanPhone) {
+      return showToast('Please enter a mobile phone number before sending SMS.', 'error');
+    }
+
+    setSendingSms(true);
+    try {
+      const res = await axios.post(`${API_BASE}/counter/send-sms`, {
+        bill_id: completedBillModal.bill_id,
+        ticket_ids: completedBillModal.ticket_ids || [],
+        phone: cleanPhone,
+        patient_names: completedBillModal.patient_names,
+        final_total: completedBillModal.final_total,
+        date_str: completedBillModal.date_str
+      });
+
+      // Update modal & Today's Log state with the confirmed phone number
+      setCompletedBillModal(prev => (prev ? { ...prev, patient_phone: cleanPhone } : prev));
+      setIsEditingSmsPhone(false);
+      fetchTodayLog();
+
+      if (res.data.mode === 'LIVE_DIALOG_SMS') {
+        showToast(`Dialog SMS Bill sent to ${cleanPhone}!`);
+      } else {
+        showToast(`SMS Bill confirmed & dispatched to ${cleanPhone} (Number saved to DB)!`);
+      }
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Failed to send SMS bill.', 'error');
+    } finally {
+      setSendingSms(false);
+    }
+  };
+
+  // Today's Log Filtered List & Financial Summary
+  const filteredTodayLog = useMemo(() => {
+    const q = todayLogSearch.trim().toLowerCase();
+    if (!q) return todayLogList;
+    return todayLogList.filter(
+      row =>
+        (row.patient_names || '').toLowerCase().includes(q) ||
+        (row.patient_phone || '').toLowerCase().includes(q) ||
+        String(row.id).includes(q)
+    );
+  }, [todayLogList, todayLogSearch]);
+
+  const todaySummary = useMemo(() => {
+    let totalRevenue = 0;
+    let paidPatientsCount = 0;
+    let outdoorCount = 0;
+
+    todayLogList.forEach(row => {
+      if (row.bill_status === 'OUTDOOR_RX') {
+        outdoorCount += 1;
+      } else {
+        paidPatientsCount += 1;
+        totalRevenue += Number(row.final_total) || 0;
+      }
+    });
+
+    return { totalRevenue, paidPatientsCount, outdoorCount, totalVisits: todayLogList.length };
+  }, [todayLogList]);
 
   return {
     DOCTOR_THEMES,
@@ -510,7 +720,23 @@ export function useCounterPortalLogic() {
     setCompletedBillModal,
     printFormat,
     setPrintFormat,
-    handleSendSmsBill,
+    showSmsConfirmBox,
+    setShowSmsConfirmBox,
+    smsPhoneInput,
+    setSmsPhoneInput,
+    isEditingSmsPhone,
+    setIsEditingSmsPhone,
+    sendingSms,
+    handleInitiateSmsFlow,
+    handleConfirmAndSendSms,
+    todayLogList,
+    filteredTodayLog,
+    loadingTodayLog,
+    fetchTodayLog,
+    todayLogSearch,
+    setTodayLogSearch,
+    todaySummary,
+    handleReprintFromTodayLog,
     doctorBellAlert,
     setDoctorBellAlert,
     statusBanner

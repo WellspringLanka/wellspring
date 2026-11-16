@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useCounterPortalLogic } from './counterLogic';
+import { useCounterPortalLogic, printReceiptDocument } from './counterLogic';
 import './DoctorPortal.css';
 import './CounterPortal.css';
 
@@ -66,7 +66,23 @@ export default function CounterPortal() {
     setCompletedBillModal,
     printFormat,
     setPrintFormat,
-    handleSendSmsBill,
+    showSmsConfirmBox,
+    setShowSmsConfirmBox,
+    smsPhoneInput,
+    setSmsPhoneInput,
+    isEditingSmsPhone,
+    setIsEditingSmsPhone,
+    sendingSms,
+    handleInitiateSmsFlow,
+    handleConfirmAndSendSms,
+    todayLogList,
+    filteredTodayLog,
+    loadingTodayLog,
+    fetchTodayLog,
+    todayLogSearch,
+    setTodayLogSearch,
+    todaySummary,
+    handleReprintFromTodayLog,
     doctorBellAlert,
     setDoctorBellAlert,
     statusBanner
@@ -155,7 +171,7 @@ export default function CounterPortal() {
             </svg>
             <span>
               {doctorBellAlert
-                ? `🔔 DOCTOR CALLING COUNTER! (Click to Dismiss)`
+                ? '🔔 DOCTOR CALLING COUNTER! (Click to Dismiss)'
                 : 'Doctor Bell: Standby'}
             </span>
           </button>
@@ -177,7 +193,6 @@ export default function CounterPortal() {
             ))}
           </div>
 
-          {/* RED SIGN OUT BUTTON */}
           <button type="button" onClick={handleCounterLogout} className="doc-logout-btn">
             Sign Out
           </button>
@@ -193,7 +208,7 @@ export default function CounterPortal() {
 
       {/* MAIN FULL-WINDOW WORKSPACE */}
       <div className="counter-workspace-grid">
-        {/* ================= 1. LEFT SIDEBAR ================= */}
+        {/* ================= 1. LEFT SIDEBAR (4 SUB-PAGES) ================= */}
         <aside className="counter-sidebar-card">
           <div className="sidebar-brand-banner">
             <div className="sidebar-banner-photo"></div>
@@ -216,10 +231,19 @@ export default function CounterPortal() {
 
             <button
               type="button"
+              className={`counter-nav-btn ${activePage === 'today_log' ? 'active' : ''}`}
+              onClick={() => setActivePage('today_log')}
+            >
+              <span>2. Today&apos;s Log</span>
+              <span className="nav-badge-pill">{todayLogList.length} Today</span>
+            </button>
+
+            <button
+              type="button"
               className={`counter-nav-btn ${activePage === 'queue' ? 'active' : ''}`}
               onClick={() => setActivePage('queue')}
             >
-              <span>2. Active Queue</span>
+              <span>3. Active Queue</span>
               <span className="nav-badge-pill">Manage</span>
             </button>
 
@@ -228,18 +252,18 @@ export default function CounterPortal() {
               className={`counter-nav-btn ${activePage === 'registration' ? 'active' : ''}`}
               onClick={() => setActivePage('registration')}
             >
-              <span>3. Registration</span>
+              <span>4. Registration</span>
               <span className="nav-badge-pill">+ New</span>
             </button>
           </nav>
 
           <div className="counter-sidebar-footer">
-            <strong>Family Billing Tip:</strong> Click <strong>+ Family Bill</strong> on multiple patients in the prescription list to combine a family&apos;s prescriptions onto a single receipt.
+            <strong>Family Billing Tip:</strong> Click <strong>+ Family Bill</strong> on multiple patients in the prescription list to combine a family&apos;s prescriptions onto one receipt.
           </div>
         </aside>
 
         {/* ================= PAGE 1: PHARMACY & POS TERMINAL ================= */}
-        {activePage === 'pharmacy' ? (
+        {activePage === 'pharmacy' && (
           <>
             {/* 2. MIDDLE COLUMN: INCOMING PRESCRIPTIONS FROM DOCTOR */}
             <section className="counter-rx-tray-card">
@@ -287,7 +311,6 @@ export default function CounterPortal() {
                           </button>
                         </div>
 
-                        {/* DOCTOR'S PRESCRIPTION SHORTHAND */}
                         <div className="rx-shorthand-preview">
                           {item.prescription}
                         </div>
@@ -319,7 +342,6 @@ export default function CounterPortal() {
 
             {/* 3. RIGHT WIDE COLUMN: CLASSIC POS & BILLING TERMINAL */}
             <main className="counter-pos-card">
-              {/* TOP ACTIVE PATIENT(S) & PRESCRIPTION VIEWER */}
               <div className="pos-active-rx-banner">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <div>
@@ -355,7 +377,6 @@ export default function CounterPortal() {
                   )}
                 </div>
 
-                {/* SIDE-BY-SIDE PRESCRIPTION CARDS FOR SELECTED FAMILY MEMBERS */}
                 {activePrescriptionCards.length > 0 && (
                   <div className="pos-rx-cards-grid">
                     {activePrescriptionCards.map((card) => (
@@ -370,9 +391,8 @@ export default function CounterPortal() {
                 )}
               </div>
 
-              {/* DUAL DROPDOWN ENTRY BAR: MEDICINES (WITH QTY) vs CLINIC SERVICES (NO QTY) */}
+              {/* DUAL DROPDOWN ENTRY BAR */}
               <div className="pos-dual-entry-grid">
-                {/* BOX A: MEDICINE AUTOCOMPLETE + UNIT PRICE (AUTO-SAVES DB) + QUANTITY */}
                 <form className="pos-entry-box" onSubmit={handleAddMedicineToBill}>
                   <div className="pos-entry-title">
                     <span>Add Medicine (POS)</span>
@@ -446,7 +466,6 @@ export default function CounterPortal() {
                   </div>
                 </form>
 
-                {/* BOX B: CONSULTATION FEES & CLINIC CAUSES (NO QUANTITY FIELD) */}
                 <form className="pos-entry-box service-box" onSubmit={handleAddServiceToBill}>
                   <div className="pos-entry-title">
                     <span>Consultation &amp; Clinic Charges</span>
@@ -502,7 +521,7 @@ export default function CounterPortal() {
                 </form>
               </div>
 
-              {/* POS BILL ITEMS TABLE (INTERNAL COUNTER VIEW ONLY) */}
+              {/* POS BILL ITEMS TABLE */}
               <div className="pos-table-container">
                 <div className="pos-table-header">
                   <div>Description (Internal View Only)</div>
@@ -548,7 +567,7 @@ export default function CounterPortal() {
                 )}
               </div>
 
-              {/* BOTTOM CHECKOUT BAR WITH MANUAL TOTAL OVERRIDE FOR ROUNDING */}
+              {/* BOTTOM CHECKOUT BAR */}
               <div className="pos-checkout-footer">
                 <div className="totals-comparison-group">
                   <div className="calc-total-box">
@@ -623,96 +642,294 @@ export default function CounterPortal() {
               </div>
             </main>
           </>
-        ) : (
-          /* PLACEHOLDER FOR QUEUE & REGISTRATION SUB-PAGES (NEXT STEP) */
+        )}
+
+        {/* ================= PAGE 2: TODAY'S LOG (SALES, OUTDOOR RX & REPRINT) ================= */}
+        {activePage === 'today_log' && (
+          <main className="today-log-container">
+            {/* TOP 3 KPI SUMMARY CARDS */}
+            <div className="today-kpi-grid">
+              <div className="today-kpi-card revenue">
+                <div className="today-kpi-label">Today&apos;s Total Revenue Collected</div>
+                <div className="today-kpi-value" style={{ color: '#15803d' }}>
+                  Rs. {todaySummary.totalRevenue.toFixed(2)}
+                </div>
+              </div>
+
+              <div className="today-kpi-card">
+                <div className="today-kpi-label">Patients Who Took Medicine Today</div>
+                <div className="today-kpi-value">
+                  {todaySummary.paidPatientsCount} Bills
+                </div>
+              </div>
+
+              <div className="today-kpi-card outdoor">
+                <div className="today-kpi-label">Outdoor Prescriptions (No Meds Bought)</div>
+                <div className="today-kpi-value" style={{ color: '#b45309' }}>
+                  {todaySummary.outdoorCount} Patients
+                </div>
+              </div>
+            </div>
+
+            {/* TODAY'S LOG TABLE WITH REPRINT & SMS ACTIONS */}
+            <div className="today-log-table-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: '#0f172a' }}>
+                    Today&apos;s Dispensary &amp; Billing Log
+                  </h2>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', color: '#64748b', fontWeight: 600 }}>
+                    Showing all patients processed today. Click <strong>Reprint / SMS Bill</strong> on any row to re-issue a receipt.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    className="pos-field-input"
+                    style={{ width: '250px' }}
+                    placeholder="Filter by patient name, phone, bill #..."
+                    value={todayLogSearch}
+                    onChange={(e) => setTodayLogSearch(e.target.value)}
+                  />
+                  <button type="button" onClick={fetchTodayLog} className="refresh-mini-btn" style={{ height: '40px' }}>
+                    {loadingTodayLog ? 'Loading...' : '↻ Refresh Log'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="today-log-header-row">
+                <div>Bill #</div>
+                <div>Time</div>
+                <div>Patient Name(s)</div>
+                <div>Phone</div>
+                <div>Status</div>
+                <div>Total Paid</div>
+                <div style={{ textAlign: 'center' }}>Bill Action</div>
+              </div>
+
+              {filteredTodayLog.length === 0 ? (
+                <div style={{ padding: '48px 20px', textAlign: 'center', color: '#64748b', fontWeight: 600 }}>
+                  No patient bills or outdoor prescriptions recorded for today yet.
+                </div>
+              ) : (
+                <div style={{ maxHeight: '520px', overflowY: 'auto' }}>
+                  {filteredTodayLog.map((row) => {
+                    const timeStr = new Date(row.created_at).toLocaleTimeString('en-GB', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    });
+                    const isOutdoor = row.bill_status === 'OUTDOOR_RX';
+
+                    return (
+                      <div key={row.id} className="today-log-item-row">
+                        <div style={{ color: '#0f766e', fontWeight: 800 }}>#{row.id}</div>
+                        <div style={{ color: '#475569' }}>{timeStr}</div>
+                        <div style={{ fontWeight: 800 }}>{row.patient_names}</div>
+                        <div style={{ color: '#475569' }}>{row.patient_phone || 'Not Set'}</div>
+                        <div>
+                          <span className={`log-status-pill ${isOutdoor ? 'outdoor' : 'paid'}`}>
+                            {isOutdoor ? 'Outdoor Rx' : 'Took Medicine'}
+                          </span>
+                        </div>
+                        <div style={{ fontWeight: 800, color: isOutdoor ? '#64748b' : '#065f46' }}>
+                          {isOutdoor ? 'Rs. 0.00' : `Rs. ${Number(row.final_total).toFixed(2)}`}
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            className="reprint-action-btn"
+                            onClick={() => handleReprintFromTodayLog(row)}
+                          >
+                            🖨️ Reprint / SMS
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </main>
+        )}
+
+        {/* ================= PLACEHOLDER FOR QUEUE & REGISTRATION SUB-PAGES ================= */}
+        {(activePage === 'queue' || activePage === 'registration') && (
           <main className="counter-pos-card" style={{ gridColumn: '2 / -1', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
             <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
               {activePage === 'queue' ? 'Active Clinic Queue Management' : 'Counter Patient Registration'}
             </h2>
             <p style={{ color: '#64748b', maxWidth: '520px', fontSize: '1rem', lineHeight: '1.6' }}>
-              The <strong>Pharmacy &amp; POS</strong> module is live. Ready to build the <strong>{activePage === 'queue' ? 'Queue' : 'Registration'}</strong> sub-page next whenever you give the word!
+              The <strong>Pharmacy &amp; POS</strong> and <strong>Today&apos;s Log</strong> modules are live. Ready to build the <strong>{activePage === 'queue' ? 'Queue' : 'Registration'}</strong> sub-page next!
             </p>
           </main>
         )}
       </div>
 
-      {/* ================= SUMMARY-ONLY BILL PRINT & SMS MODAL ================= */}
+      {/* ================= UPGRADED SUMMARY-ONLY BILL PRINT & SMS MODAL ================= */}
       {completedBillModal && (
         <div className="receipt-modal-backdrop">
           <div className="receipt-modal-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800 }}>
+            {/* TOP HEADER: DARK TEXT + CLEAN CLOSE BUTTON */}
+            <div className="receipt-modal-top">
+              <h2 className="receipt-modal-title">
                 Bill Completed — Issue Receipt
               </h2>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  type="button"
-                  className={`rx-family-toggle-btn ${printFormat === 'thermal' ? 'active' : ''}`}
-                  onClick={() => setPrintFormat('thermal')}
-                >
-                  80mm POS Printer
-                </button>
-                <button
-                  type="button"
-                  className={`rx-family-toggle-btn ${printFormat === 'a4' ? 'active' : ''}`}
-                  onClick={() => setPrintFormat('a4')}
-                >
-                  A4 Format
-                </button>
-              </div>
+              <button
+                type="button"
+                className="receipt-modal-close-icon"
+                onClick={() => setCompletedBillModal(null)}
+                title="Close Receipt Window"
+              >
+                ×
+              </button>
             </div>
 
-            {/* PRINTABLE SUMMARY RECEIPT (STRICTLY NO ITEMIZED MEDICINES OR PRICES) */}
+            {/* FULL-WIDTH FORMAT SWITCHER BAR (NO BUTTON OVERFLOW) */}
+            <div className="receipt-format-switcher">
+              <button
+                type="button"
+                className={`format-tab-btn ${printFormat === 'thermal' ? 'active' : ''}`}
+                onClick={() => setPrintFormat('thermal')}
+              >
+                🧾 80mm Thermal POS Printer
+              </button>
+              <button
+                type="button"
+                className={`format-tab-btn ${printFormat === 'a4' ? 'active' : ''}`}
+                onClick={() => setPrintFormat('a4')}
+              >
+                📄 Standard A4 Format
+              </button>
+            </div>
+
+            {/* SPACIOUS, UNCLUMPED SUMMARY RECEIPT PREVIEW */}
             <div className={`printable-bill-sheet ${printFormat === 'thermal' ? 'thermal-mode' : 'a4-mode'}`}>
-              <div style={{ textAlign: 'center', borderBottom: '1.5px solid #000', paddingBottom: '10px', marginBottom: '12px' }}>
-                <div style={{ fontFamily: 'Tangerine, cursive', fontSize: '3rem', fontWeight: 700, lineHeight: 0.9 }}>
-                  Wellspring
+              <div className="receipt-brand-header">
+                <div className="receipt-brand-script">Wellspring</div>
+                <div className="receipt-brand-sub">Medical Center &amp; Dispensary</div>
+                <span className="receipt-no-badge">
+                  Official Receipt #{completedBillModal.bill_id}
+                </span>
+              </div>
+
+              <div className="receipt-meta-list">
+                <div className="receipt-meta-row">
+                  <span className="receipt-meta-label">Date &amp; Time:</span>
+                  <span className="receipt-meta-value">{completedBillModal.date_str}</span>
                 </div>
-                <div style={{ fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>
-                  Medical Center &amp; Dispensary
+                <div className="receipt-meta-row">
+                  <span className="receipt-meta-label">Patient Name(s):</span>
+                  <span className="receipt-meta-value">{completedBillModal.patient_names}</span>
                 </div>
-                <div style={{ fontSize: '0.76rem', marginTop: '4px' }}>
-                  Official Payment Receipt #{completedBillModal.bill_id}
+                <div className="receipt-meta-row">
+                  <span className="receipt-meta-label">Consultant:</span>
+                  <span className="receipt-meta-value">{completedBillModal.doctor_name}</span>
                 </div>
               </div>
 
-              <div style={{ fontSize: '0.88rem', lineHeight: '1.7', marginBottom: '14px' }}>
-                <div><strong>Date:</strong> {completedBillModal.date_str}</div>
-                <div><strong>Patient(s):</strong> {completedBillModal.patient_names}</div>
-                <div><strong>Consultant:</strong> {completedBillModal.doctor_name}</div>
-              </div>
-
-              <div style={{ borderTop: '1.5px dashed #000', borderBottom: '1.5px dashed #000', padding: '14px 0', margin: '14px 0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.92rem', fontWeight: 600, marginBottom: '6px' }}>
+              <div className="receipt-summary-box">
+                <div className="receipt-summary-note">
                   <span>Medical Consultation &amp; Dispensary Charges</span>
                   <span>Included</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.35rem', fontWeight: 800, marginTop: '10px' }}>
+                <div className="receipt-grand-row">
                   <span>TOTAL AMOUNT</span>
                   <span>Rs. {Number(completedBillModal.final_total).toFixed(2)}</span>
                 </div>
               </div>
 
-              <div style={{ textAlign: 'center', fontSize: '0.78rem', marginTop: '12px' }}>
-                Thank you for visiting Wellspring.<br />Wishing you a speedy recovery!
+              <div className="receipt-footer-note">
+                Thank you for visiting Wellspring.<br />
+                Wishing you a speedy recovery!
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginTop: '16px' }}>
+            {/* INTERACTIVE SMS NUMBER CONFIRMATION & EDIT DRAWER */}
+            {showSmsConfirmBox && (
+              <div className="sms-confirm-drawer">
+                <div className="sms-confirm-header">
+                  <span className="sms-confirm-title">
+                    📱 Confirm Patient Mobile Number for SMS Bill
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowSmsConfirmBox(false)}
+                    style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: 800, cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+
+                {!isEditingSmsPhone ? (
+                  <div className="sms-phone-display-row">
+                    <div>
+                      <div style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b' }}>
+                        Registered Database Number:
+                      </div>
+                      <div className="sms-phone-number-text">
+                        {smsPhoneInput || 'No Phone Number Recorded'}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="sms-edit-btn"
+                      onClick={() => setIsEditingSmsPhone(true)}
+                    >
+                      ✎ Edit Number
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                    <input
+                      type="text"
+                      className="pos-field-input"
+                      placeholder="Enter new mobile number (e.g. 0771234567)"
+                      value={smsPhoneInput}
+                      onChange={(e) => setSmsPhoneInput(e.target.value)}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      className="sms-edit-btn"
+                      onClick={() => setIsEditingSmsPhone(false)}
+                    >
+                      Lock In
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  disabled={sendingSms}
+                  className="pos-add-btn green"
+                  style={{ width: '100%', height: '44px', fontSize: '0.95rem' }}
+                  onClick={handleConfirmAndSendSms}
+                >
+                  {sendingSms
+                    ? 'Sending SMS via Dialog Gateway...'
+                    : `✓ Confirm & Send SMS to ${smsPhoneInput || '...'}`}
+                </button>
+              </div>
+            )}
+
+            {/* BOTTOM 3 ACTION BUTTONS */}
+            <div className="receipt-modal-actions">
               <button
                 type="button"
                 className="pos-add-btn green"
-                style={{ height: '46px' }}
-                onClick={() => window.print()}
+                style={{ height: '48px' }}
+                onClick={() => printReceiptDocument(completedBillModal, printFormat)}
               >
-                🖨️ Print ({printFormat.toUpperCase()})
+                🖨️ Print ({printFormat === 'thermal' ? '80mm' : 'A4'})
               </button>
 
               <button
                 type="button"
                 className="pos-add-btn"
-                style={{ height: '46px' }}
-                onClick={() => handleSendSmsBill(completedBillModal)}
+                style={{ height: '48px' }}
+                onClick={handleInitiateSmsFlow}
               >
                 📱 Send SMS Bill
               </button>
@@ -720,7 +937,7 @@ export default function CounterPortal() {
               <button
                 type="button"
                 className="doc-logout-btn"
-                style={{ height: '46px', background: '#334155', borderColor: '#475569' }}
+                style={{ height: '48px', background: '#334155', borderColor: '#475569' }}
                 onClick={() => setCompletedBillModal(null)}
               >
                 Done / Close
