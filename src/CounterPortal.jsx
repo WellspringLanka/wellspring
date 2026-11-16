@@ -7,6 +7,7 @@ export default function CounterPortal() {
   const {
     DOCTOR_THEMES,
     calculateAge,
+    formatClearDate,
     currentClock,
     activeTheme,
     setActiveTheme,
@@ -86,9 +87,27 @@ export default function CounterPortal() {
     setTodayLogSearch,
     todaySummary,
     handleReprintFromTodayLog,
+    activeWaitingQueue,
+    loadingWaitingQueue,
+    fetchActiveWaitingQueue,
+    queueSearch,
+    setQueueSearch,
+    queueSearchResults,
+    queueSearchPage,
+    hasMoreQueueSearch,
+    searchingQueuePatients,
+    handleQueuePatientSearch,
+    addingToQueueId,
+    handleAddPatientToQueue,
+    handleRemoveFromActiveQueue,
+    regForm,
+    setRegForm,
+    registeringPatient,
+    handleCounterRegisterPatient,
     doctorBellAlert,
     setDoctorBellAlert,
-    statusBanner
+    statusBanner,
+    playDoctorBellSound
   } = useCounterPortalLogic();
 
   // ================= 1. COUNTER LOGIN SCREEN =================
@@ -161,12 +180,18 @@ export default function CounterPortal() {
             <span className="doc-specialty-tag">{loggedInStaff.role}</span>
           </div>
 
-          {/* LIVE DOCTOR BELL ALERT RECEIVER */}
+          {/* LIVE DOCTOR BELL ALERT RECEIVER (Click when standby to test real bell sound!) */}
           <button
             type="button"
-            onClick={() => setDoctorBellAlert(null)}
+            onClick={() => {
+              if (doctorBellAlert) {
+                setDoctorBellAlert(null);
+              } else {
+                playDoctorBellSound();
+              }
+            }}
             className={`counter-bell-indicator ${doctorBellAlert ? 'ringing-alert' : ''}`}
-            title="Click to acknowledge Doctor Bell Alert"
+            title="Click to dismiss alert (or click on standby to test reception bell sound)"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.8">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -216,7 +241,7 @@ export default function CounterPortal() {
 
       {/* MAIN FULL-WINDOW WORKSPACE */}
       <div className="counter-workspace-grid">
-        {/* ================= 1. LEFT SIDEBAR (4 SUB-PAGES, NO "Rx" CONFUSION) ================= */}
+        {/* ================= 1. LEFT SIDEBAR (4 SUB-PAGES) ================= */}
         <aside className="counter-sidebar-card">
           <div className="sidebar-brand-banner">
             <div className="sidebar-banner-photo"></div>
@@ -252,7 +277,7 @@ export default function CounterPortal() {
               onClick={() => setActivePage('queue')}
             >
               <span>3. Active Queue</span>
-              <span className="nav-badge-pill">Manage</span>
+              <span className="nav-badge-pill">{activeWaitingQueue.length} In Queue</span>
             </button>
 
             <button
@@ -266,14 +291,13 @@ export default function CounterPortal() {
           </nav>
 
           <div className="counter-sidebar-footer">
-            <strong>Family Billing Tip:</strong> Click <strong>+ Family Bill</strong> on multiple patients in the prescription list to combine a family&apos;s medicines onto one receipt.
+            <strong>Quick Workflow:</strong> Register new patients in <strong>Registration</strong>, issue queue numbers in <strong>Active Queue</strong>, and dispense bills in <strong>Pharmacy &amp; POS</strong>.
           </div>
         </aside>
 
         {/* ================= PAGE 1: PHARMACY & POS TERMINAL ================= */}
         {activePage === 'pharmacy' && (
           <>
-            {/* 2. MIDDLE COLUMN: INCOMING PRESCRIPTIONS FROM DOCTOR */}
             <section className="counter-rx-tray-card">
               <div className="section-card-header" style={{ marginBottom: '14px', paddingBottom: '12px' }}>
                 <h2 className="section-card-title" style={{ fontSize: '1.15rem' }}>
@@ -336,7 +360,6 @@ export default function CounterPortal() {
                               handleSelectSinglePrescription(item.ticket_id);
                               handleFinalizeCheckout('OUTDOOR_RX');
                             }}
-                            title="Patient only took an outside prescription / left without buying medicines"
                           >
                             Outdoor Medicine / Leave →
                           </button>
@@ -348,7 +371,6 @@ export default function CounterPortal() {
               </div>
             </section>
 
-            {/* 3. RIGHT WIDE COLUMN: CLASSIC POS & BILLING TERMINAL */}
             <main className="counter-pos-card">
               <div className="pos-active-rx-banner">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
@@ -399,7 +421,6 @@ export default function CounterPortal() {
                 )}
               </div>
 
-              {/* DUAL DROPDOWN ENTRY BAR */}
               <div className="pos-dual-entry-grid">
                 <form className="pos-entry-box" onSubmit={handleAddMedicineToBill}>
                   <div className="pos-entry-title">
@@ -529,7 +550,6 @@ export default function CounterPortal() {
                 </form>
               </div>
 
-              {/* POS BILL ITEMS TABLE */}
               <div className="pos-table-container">
                 <div className="pos-table-header">
                   <div>Description (Internal View Only)</div>
@@ -575,7 +595,6 @@ export default function CounterPortal() {
                 )}
               </div>
 
-              {/* BOTTOM CHECKOUT BAR */}
               <div className="pos-checkout-footer">
                 <div className="totals-comparison-group">
                   <div className="calc-total-box">
@@ -633,7 +652,6 @@ export default function CounterPortal() {
                     disabled={submittingCheckout || selectedTicketIds.length === 0}
                     className="outdoor-submit-btn"
                     onClick={() => handleFinalizeCheckout('OUTDOOR_RX')}
-                    title="Select when doctor wrote outdoor drugs and patient leaves without dispensary billing"
                   >
                     Outdoor Drugs / Close Queue
                   </button>
@@ -652,10 +670,9 @@ export default function CounterPortal() {
           </>
         )}
 
-        {/* ================= PAGE 2: TODAY'S LOG (NO REVENUE CARD, STARTS AT BILL #1) ================= */}
+        {/* ================= PAGE 2: FULL-HEIGHT TODAY'S LOG ================= */}
         {activePage === 'today_log' && (
           <main className="today-log-container">
-            {/* TOP 2 KPI SUMMARY CARDS (TOTAL REVENUE REMOVED FOR COUNTER PRIVACY) */}
             <div className="today-kpi-grid">
               <div className="today-kpi-card">
                 <div className="today-kpi-label">Patients Who Took Medicine Today</div>
@@ -672,9 +689,8 @@ export default function CounterPortal() {
               </div>
             </div>
 
-            {/* TODAY'S LOG TABLE WITH DAILY BILL #1, #2, #3 & REPRINT */}
             <div className="today-log-table-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '12px', flexShrink: 0 }}>
                 <div>
                   <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: '#0f172a' }}>
                     Today&apos;s Dispensary &amp; Billing Log
@@ -699,7 +715,7 @@ export default function CounterPortal() {
                 </div>
               </div>
 
-              <div className="today-log-header-row">
+              <div className="today-log-header-row" style={{ flexShrink: 0 }}>
                 <div>Today Bill #</div>
                 <div>Time</div>
                 <div>Patient Name(s)</div>
@@ -710,11 +726,11 @@ export default function CounterPortal() {
               </div>
 
               {filteredTodayLog.length === 0 ? (
-                <div style={{ padding: '48px 20px', textAlign: 'center', color: '#64748b', fontWeight: 600 }}>
+                <div style={{ padding: '56px 20px', textAlign: 'center', color: '#64748b', fontWeight: 600 }}>
                   No patient bills or outdoor prescriptions recorded for today yet.
                 </div>
               ) : (
-                <div style={{ maxHeight: '520px', overflowY: 'auto' }}>
+                <div className="today-log-scroll-body">
                   {filteredTodayLog.map((row) => {
                     const timeStr = new Intl.DateTimeFormat('en-GB', {
                       timeZone: 'Asia/Colombo',
@@ -758,15 +774,394 @@ export default function CounterPortal() {
           </main>
         )}
 
-        {/* ================= PLACEHOLDER FOR QUEUE & REGISTRATION SUB-PAGES ================= */}
-        {(activePage === 'queue' || activePage === 'registration') && (
-          <main className="counter-pos-card" style={{ gridColumn: '2 / -1', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-            <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
-              {activePage === 'queue' ? 'Active Clinic Queue Management' : 'Counter Patient Registration'}
-            </h2>
-            <p style={{ color: '#64748b', maxWidth: '520px', fontSize: '1rem', lineHeight: '1.6' }}>
-              Ready to build the <strong>{activePage === 'queue' ? 'Queue' : 'Registration'}</strong> sub-page next!
-            </p>
+        {/* ================= PAGE 3: ACTIVE QUEUE (MIDDLE SEARCH + RIGHT LIVE QUEUE) ================= */}
+        {activePage === 'queue' && (
+          <>
+            {/* MIDDLE COLUMN: FIND REGISTERED PATIENT (SAME SMART SEARCH AS DOCTOR PAGE) */}
+            <section className="counter-queue-search-card">
+              <div className="section-card-header" style={{ marginBottom: '14px', paddingBottom: '12px' }}>
+                <h2 className="section-card-title" style={{ fontSize: '1.15rem' }}>
+                  Find Patient for Queue
+                </h2>
+                <button
+                  type="button"
+                  className="refresh-mini-btn"
+                  onClick={() => {
+                    setQueueSearch({ name: '', nic: '', phone: '', dob: '' });
+                    setQueueSearchResults([]);
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+
+              <div className="advanced-search-grid" style={{ flexShrink: 0 }}>
+                <div className="walkin-form-group full-width">
+                  <label className="walkin-label">Patient Name</label>
+                  <input
+                    type="text"
+                    className="sidebar-search-input"
+                    style={{ marginBottom: 0 }}
+                    placeholder="e.g., Priyantha"
+                    value={queueSearch.name}
+                    onChange={(e) => setQueueSearch({ ...queueSearch, name: e.target.value })}
+                  />
+                </div>
+
+                <div className="walkin-form-group">
+                  <label className="walkin-label">NIC Number</label>
+                  <input
+                    type="text"
+                    className="sidebar-search-input"
+                    style={{ marginBottom: 0 }}
+                    placeholder="ID Number"
+                    value={queueSearch.nic}
+                    onChange={(e) => setQueueSearch({ ...queueSearch, nic: e.target.value })}
+                  />
+                </div>
+
+                <div className="walkin-form-group">
+                  <label className="walkin-label">Phone</label>
+                  <input
+                    type="text"
+                    className="sidebar-search-input"
+                    style={{ marginBottom: 0 }}
+                    placeholder="07X..."
+                    value={queueSearch.phone}
+                    onChange={(e) => setQueueSearch({ ...queueSearch, phone: e.target.value })}
+                  />
+                </div>
+
+                <div className="walkin-form-group full-width">
+                  <label className="walkin-label">Date of Birth (YYYY, YYYY/MM, or YYYY-MM-DD)</label>
+                  <input
+                    type="text"
+                    className="sidebar-search-input"
+                    style={{ marginBottom: 0 }}
+                    placeholder="e.g., 2005 or 2005/12 or 1993-05-14"
+                    value={queueSearch.dob}
+                    onChange={(e) => setQueueSearch({ ...queueSearch, dob: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {searchingQueuePatients && (
+                <p style={{ color: '#0f766e', fontSize: '0.86rem', fontWeight: 700, margin: '6px 0' }}>
+                  Searching patient database...
+                </p>
+              )}
+
+              <div className="queue-search-results-scroll">
+                {queueSearchResults.length === 0 ? (
+                  <p style={{ color: '#64748b', textAlign: 'center', padding: '32px 12px', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                    Type a patient&apos;s Name, NIC, Phone, or Birth Year above to find them and add them to today&apos;s active queue.
+                  </p>
+                ) : (
+                  queueSearchResults.map((pat) => {
+                    const alreadyInQueue = activeWaitingQueue.some((q) => q.patient?.id === pat.id);
+                    return (
+                      <div key={pat.id} className="queue-patient-result-card">
+                        <div className="patient-item-info">
+                          <div className="patient-item-name">{pat.name}</div>
+                          <div className="patient-item-sub">
+                            DOB: {formatClearDate(pat.birth_date)} ({calculateAge(pat.birth_date)})
+                          </div>
+                          <div className="patient-item-sub">
+                            Tel: {pat.phone || 'N/A'} {pat.id_number ? `• NIC: ${pat.id_number}` : ''}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={alreadyInQueue || addingToQueueId === pat.id}
+                          className="add-to-queue-btn"
+                          onClick={() => handleAddPatientToQueue(pat)}
+                        >
+                          {alreadyInQueue
+                            ? '✓ In Queue'
+                            : addingToQueueId === pat.id
+                            ? 'Adding...'
+                            : '+ Add to Queue'}
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+
+                {hasMoreQueueSearch && (
+                  <button
+                    type="button"
+                    onClick={() => handleQueuePatientSearch(queueSearchPage + 1)}
+                    className="walkin-submit-btn"
+                    style={{ marginTop: '8px' }}
+                  >
+                    Load More Results
+                  </button>
+                )}
+              </div>
+            </section>
+
+            {/* RIGHT WIDE COLUMN: TODAY'S ACTIVE WAITING QUEUE FOR DOCTOR */}
+            <main className="counter-active-queue-card">
+              <div className="section-card-header" style={{ marginBottom: '16px', paddingBottom: '14px' }}>
+                <div>
+                  <h2 className="section-card-title" style={{ fontSize: '1.3rem' }}>
+                    Today&apos;s Active Waiting Queue (Doctor Room)
+                  </h2>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', color: '#64748b', fontWeight: 600 }}>
+                    Strictly showing patients registered for <strong>today only</strong>. Old unfinished tickets from past days are automatically cleared.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <span className="queue-count-pill" style={{ fontSize: '0.9rem', padding: '7px 14px' }}>
+                    {activeWaitingQueue.length} Waiting Today
+                  </span>
+                  <button type="button" onClick={fetchActiveWaitingQueue} className="refresh-mini-btn" style={{ height: '38px' }}>
+                    {loadingWaitingQueue ? 'Loading...' : '↻ Refresh'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="active-queue-list-scroll">
+                {activeWaitingQueue.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '70px 24px', color: '#64748b' }}>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b', marginBottom: '8px' }}>
+                      Active Queue is Currently Empty (0 Waiting)
+                    </h3>
+                    <p style={{ fontSize: '0.95rem', maxWidth: '460px', margin: '0 auto', lineHeight: '1.6' }}>
+                      Search for an existing patient in the middle column and click <strong>+ Add to Queue</strong>, or register a new patient in the <strong>Registration</strong> tab.
+                    </p>
+                  </div>
+                ) : (
+                  activeWaitingQueue.map((item, index) => (
+                    <div key={item.ticket_id} className="active-queue-row-card">
+                      <div className="active-queue-left">
+                        <div className="active-queue-number-circle" title="Arrival Queue Order">
+                          #{index + 1}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '1.12rem', fontWeight: 800, color: '#0f172a' }}>
+                            {item.patient.name}
+                          </div>
+                          <div style={{ fontSize: '0.86rem', fontWeight: 600, color: '#475569', marginTop: '3px' }}>
+                            {calculateAge(item.patient.birth_date)} • DOB: {formatClearDate(item.patient.birth_date)} • Tel: {item.patient.phone || 'No Phone'}
+                            {item.patient.id_number ? ` • NIC: ${item.patient.id_number}` : ''}
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="cancel-queue-btn"
+                        onClick={() => handleRemoveFromActiveQueue(item.ticket_id, item.patient.name)}
+                        title="Remove patient if they walked out or cancelled before seeing the doctor"
+                      >
+                        ✕ Cancel / Left Clinic
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </main>
+          </>
+        )}
+
+        {/* ================= PAGE 4: SPACIOUS COUNTER PATIENT REGISTRATION ================= */}
+        {activePage === 'registration' && (
+          <main className="counter-registration-card">
+            <div className="section-card-header" style={{ marginBottom: '18px' }}>
+              <div>
+                <h2 className="section-card-title" style={{ fontSize: '1.4rem' }}>
+                  New Patient Registration
+                </h2>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>
+                  Register a new patient into the master database. Fields automatically clear on submit so you can register the next patient immediately.
+                </p>
+              </div>
+              <span className="section-card-tag">Master Database Entry</span>
+            </div>
+
+            <form onSubmit={handleCounterRegisterPatient} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+              <div className="counter-reg-grid">
+                <div className="counter-reg-group span-2">
+                  <label className="counter-reg-label">Patient Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    className="counter-reg-input"
+                    placeholder="Enter patient's full name"
+                    value={regForm.name}
+                    onChange={(e) => setRegForm({ ...regForm, name: e.target.value })}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="counter-reg-group">
+                  <label className="counter-reg-label">Date of Birth (YYYY-MM-DD)</label>
+                  <input
+                    type="date"
+                    className="counter-reg-input"
+                    value={regForm.birth_date}
+                    onChange={(e) => setRegForm({ ...regForm, birth_date: e.target.value })}
+                  />
+                </div>
+
+                <div className="counter-reg-group">
+                  <label className="counter-reg-label">Gender *</label>
+                  <div className="counter-reg-radio-box">
+                    <label className="walkin-radio-label" style={{ fontSize: '0.95rem' }}>
+                      <input
+                        type="radio"
+                        name="counter_gender"
+                        value="1"
+                        checked={regForm.gender === '1'}
+                        onChange={(e) => setRegForm({ ...regForm, gender: e.target.value })}
+                      />
+                      Male
+                    </label>
+                    <label className="walkin-radio-label" style={{ fontSize: '0.95rem' }}>
+                      <input
+                        type="radio"
+                        name="counter_gender"
+                        value="2"
+                        checked={regForm.gender === '2'}
+                        onChange={(e) => setRegForm({ ...regForm, gender: e.target.value })}
+                      />
+                      Female
+                    </label>
+                  </div>
+                </div>
+
+                <div className="counter-reg-group">
+                  <label className="counter-reg-label">Marital Status (Optional)</label>
+                  <div className="counter-reg-radio-box">
+                    <label className="walkin-radio-label" style={{ fontSize: '0.95rem' }}>
+                      <input
+                        type="radio"
+                        name="counter_married"
+                        value="0"
+                        checked={regForm.married === '0'}
+                        onChange={(e) => setRegForm({ ...regForm, married: e.target.value })}
+                      />
+                      Single / Unmarried
+                    </label>
+                    <label className="walkin-radio-label" style={{ fontSize: '0.95rem' }}>
+                      <input
+                        type="radio"
+                        name="counter_married"
+                        value="1"
+                        checked={regForm.married === '1'}
+                        onChange={(e) => setRegForm({ ...regForm, married: e.target.value })}
+                      />
+                      Married
+                    </label>
+                  </div>
+                </div>
+
+                <div className="counter-reg-group">
+                  <label className="counter-reg-label">Mobile Phone Number (Optional)</label>
+                  <input
+                    type="text"
+                    className="counter-reg-input"
+                    placeholder="07X XXX XXXX"
+                    value={regForm.phone}
+                    onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
+                  />
+                </div>
+
+                <div className="counter-reg-group">
+                  <label className="counter-reg-label">NIC / ID Number (Optional)</label>
+                  <input
+                    type="text"
+                    className="counter-reg-input"
+                    placeholder="National ID Number"
+                    value={regForm.id_number}
+                    onChange={(e) => setRegForm({ ...regForm, id_number: e.target.value })}
+                  />
+                </div>
+
+                <div className="counter-reg-group">
+                  <label className="counter-reg-label">Weight in kg (Optional)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="counter-reg-input"
+                    placeholder="e.g., 65.5"
+                    value={regForm.weight}
+                    onChange={(e) => setRegForm({ ...regForm, weight: e.target.value })}
+                  />
+                </div>
+
+                <div className="counter-reg-group">
+                  <label className="counter-reg-label">Height in cm (Optional)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="counter-reg-input"
+                    placeholder="e.g., 170"
+                    value={regForm.height}
+                    onChange={(e) => setRegForm({ ...regForm, height: e.target.value })}
+                  />
+                </div>
+
+                <div className="counter-reg-group span-3">
+                  <label className="counter-reg-label">Common Details / Initial Medical Notes (Optional)</label>
+                  <input
+                    type="text"
+                    className="counter-reg-input"
+                    placeholder="Known medical conditions, long-term notes, or reference details..."
+                    value={regForm.common}
+                    onChange={(e) => setRegForm({ ...regForm, common: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="counter-reg-submit-bar">
+                <label className="walkin-radio-label" style={{ fontSize: '1rem', fontWeight: 800, color: '#0f766e' }}>
+                  <input
+                    type="checkbox"
+                    checked={regForm.autoAddToQueue}
+                    onChange={(e) => setRegForm({ ...regForm, autoAddToQueue: e.target.checked })}
+                    style={{ width: '20px', height: '20px', accentColor: '#0d9488' }}
+                  />
+                  Automatically place this patient into Today&apos;s Active Doctor Queue upon registration
+                </label>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    type="button"
+                    className="refresh-mini-btn"
+                    style={{ padding: '14px 22px', fontSize: '0.95rem' }}
+                    onClick={() =>
+                      setRegForm({
+                        name: '',
+                        birth_date: '',
+                        phone: '',
+                        id_number: '',
+                        gender: '1',
+                        married: '0',
+                        weight: '',
+                        height: '',
+                        common: '',
+                        autoAddToQueue: regForm.autoAddToQueue
+                      })
+                    }
+                  >
+                    Clear Fields
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={registeringPatient}
+                    className="pos-grand-submit-btn"
+                    style={{ padding: '16px 34px' }}
+                  >
+                    {registeringPatient ? 'REGISTERING...' : '✓ REGISTER PATIENT'}
+                  </button>
+                </div>
+              </div>
+            </form>
           </main>
         )}
       </div>
@@ -847,7 +1242,6 @@ export default function CounterPortal() {
               </div>
             </div>
 
-            {/* INTERACTIVE SMS NUMBER CONFIRMATION & CLEAR "SMS SENT!" STATE */}
             {showSmsConfirmBox && (
               <div className="sms-confirm-drawer">
                 {smsSentStatus ? (
@@ -946,7 +1340,6 @@ export default function CounterPortal() {
               </div>
             )}
 
-            {/* BOTTOM 3 ACTION BUTTONS */}
             <div className="receipt-modal-actions">
               <button
                 type="button"

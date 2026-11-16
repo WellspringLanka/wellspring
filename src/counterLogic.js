@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import axios from 'axios';
-import { DOCTOR_THEMES, calculateAge } from './doctorLogic';
+import { DOCTOR_THEMES, calculateAge, formatClearDate } from './doctorLogic';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -25,22 +25,71 @@ export function getFormattedSriLankaClock() {
   return `${datePart} • ${timePart}`;
 }
 
+// 1. REALISTIC METALLIC DESK BELL SOUND (Double-Strike Brass Reception Bell)
 function playDoctorBellSound() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    osc.frequency.setValueAtTime(1174.66, ctx.currentTime + 0.18);
-    gain.gain.setValueAtTime(0.25, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.9);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.9);
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioCtx();
+
+    const strikeBell = (startTime) => {
+      // Metallic bell harmonic overtones (Fundamental + Inharmonic partials)
+      const partials = [
+        { freq: 1046.5, amp: 0.35, decay: 1.4 }, // C6 fundamental ring
+        { freq: 2093.0, amp: 0.22, decay: 1.0 }, // 2nd harmonic
+        { freq: 3139.5, amp: 0.14, decay: 0.65 }, // Metallicclang partial
+        { freq: 4435.0, amp: 0.09, decay: 0.3 }   // Initial brass strike transient
+      ];
+
+      partials.forEach(({ freq, amp, decay }) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+
+        gain.gain.setValueAtTime(0.0001, startTime);
+        gain.gain.linearRampToValueAtTime(amp, startTime + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + decay);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + decay + 0.05);
+      });
+    };
+
+    // Classic "Ding-Ding!" double reception bell ring
+    strikeBell(ctx.currentTime);
+    strikeBell(ctx.currentTime + 0.28);
   } catch {
     // Audio blocked until user interaction
+  }
+}
+
+// 2. SUBTLE CHIME WHEN NEW PRESCRIPTION ARRIVES AT COUNTER
+function playNewPrescriptionSound() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    const notes = [587.33, 880.0]; // Soft D5 -> A5 gentle chime
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+
+      gain.gain.setValueAtTime(0.0001, now + idx * 0.12);
+      gain.gain.linearRampToValueAtTime(0.14, now + idx * 0.12 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.12 + 0.45);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + idx * 0.12);
+      osc.stop(now + idx * 0.12 + 0.5);
+    });
+  } catch {
+    // Ignore if audio context not unlocked yet
   }
 }
 
@@ -171,12 +220,13 @@ export function useCounterPortalLogic() {
   // 3. Left Sidebar Navigation: 'pharmacy' | 'today_log' | 'queue' | 'registration'
   const [activePage, setActivePage] = useState('pharmacy');
 
-  // 4. Incoming Prescriptions from Doctor (flag = 2)
+  // 4. Incoming Prescriptions from Doctor (flag = 2) + Sound Detection Ref
   const [prescriptionQueue, setPrescriptionQueue] = useState([]);
   const [loadingPrescriptions, setLoadingPrescriptions] = useState(false);
   const [selectedTicketIds, setSelectedTicketIds] = useState([]);
   const [customWalkInName, setCustomWalkInName] = useState('');
   const [customWalkInPhone, setCustomWalkInPhone] = useState('');
+  const knownPrescriptionIdsRef = useRef(null);
 
   // 5. Medicine & Clinic Services Catalog
   const [medicinesCatalog, setMedicinesCatalog] = useState([]);
@@ -209,14 +259,39 @@ export function useCounterPortalLogic() {
   const [smsPhoneInput, setSmsPhoneInput] = useState('');
   const [isEditingSmsPhone, setIsEditingSmsPhone] = useState(false);
   const [sendingSms, setSendingSms] = useState(false);
-  const [smsSentStatus, setSmsSentStatus] = useState(null); // Holds sent status so cashier sees "SMS Sent!"
+  const [smsSentStatus, setSmsSentStatus] = useState(null);
 
   // 10. Today's Log State
   const [todayLogList, setTodayLogList] = useState([]);
   const [loadingTodayLog, setLoadingTodayLog] = useState(false);
   const [todayLogSearch, setTodayLogSearch] = useState('');
 
-  // 11. Live Doctor Bell Receiver Alert
+  // 11. Page 3: Active Queue & Patient Search State (Same smart search as Doctor Portal)
+  const [activeWaitingQueue, setActiveWaitingQueue] = useState([]);
+  const [loadingWaitingQueue, setLoadingWaitingQueue] = useState(false);
+  const [queueSearch, setQueueSearch] = useState({ name: '', nic: '', phone: '', dob: '' });
+  const [queueSearchResults, setQueueSearchResults] = useState([]);
+  const [queueSearchPage, setQueueSearchPage] = useState(1);
+  const [hasMoreQueueSearch, setHasMoreQueueSearch] = useState(false);
+  const [searchingQueuePatients, setSearchingQueuePatients] = useState(false);
+  const [addingToQueueId, setAddingToQueueId] = useState(null);
+
+  // 12. Page 4: Counter Full Registration Form State
+  const [regForm, setRegForm] = useState({
+    name: '',
+    birth_date: '',
+    phone: '',
+    id_number: '',
+    gender: '1',
+    married: '0',
+    weight: '',
+    height: '',
+    common: '',
+    autoAddToQueue: true
+  });
+  const [registeringPatient, setRegisteringPatient] = useState(false);
+
+  // 13. Live Doctor Bell Receiver Alert
   const [lastSeenBellId, setLastSeenBellId] = useState(() => {
     return Number(sessionStorage.getItem('last_seen_bell_id') || 0);
   });
@@ -271,12 +346,24 @@ export function useCounterPortalLogic() {
     }
   }, [loggedInStaff, selectedServiceId]);
 
+  // Fetch Incoming Doctor Prescriptions (flag = 2) + Play Chime on New Arrival
   const fetchPrescriptions = useCallback(async () => {
     if (!loggedInStaff) return;
     setLoadingPrescriptions(true);
     try {
       const res = await axios.get(`${API_BASE}/counter/prescriptions`);
       const list = res.data || [];
+
+      // Detect if a brand new prescription arrived from the Doctor
+      const incomingIds = list.map(item => item.ticket_id);
+      if (knownPrescriptionIdsRef.current !== null) {
+        const hasNewArrival = incomingIds.some(id => !knownPrescriptionIdsRef.current.includes(id));
+        if (hasNewArrival) {
+          playNewPrescriptionSound();
+        }
+      }
+      knownPrescriptionIdsRef.current = incomingIds;
+
       setPrescriptionQueue(list);
 
       setSelectedTicketIds(prev => {
@@ -288,6 +375,20 @@ export function useCounterPortalLogic() {
       console.error('Failed to fetch prescriptions:', err.message);
     } finally {
       setLoadingPrescriptions(false);
+    }
+  }, [loggedInStaff]);
+
+  // Fetch Active Doctor Waiting Queue (flag = 1)
+  const fetchActiveWaitingQueue = useCallback(async () => {
+    if (!loggedInStaff) return;
+    setLoadingWaitingQueue(true);
+    try {
+      const res = await axios.get(`${API_BASE}/doctor/queue`);
+      setActiveWaitingQueue(res.data || []);
+    } catch (err) {
+      console.error('Failed to load active waiting queue:', err.message);
+    } finally {
+      setLoadingWaitingQueue(false);
     }
   }, [loggedInStaff]);
 
@@ -305,19 +406,22 @@ export function useCounterPortalLogic() {
   }, [loggedInStaff]);
 
   useEffect(() => {
-    if (loggedInStaff && activePage === 'today_log') {
-      fetchTodayLog();
-    }
-  }, [loggedInStaff, activePage, fetchTodayLog]);
+    if (!loggedInStaff) return;
+    if (activePage === 'today_log') fetchTodayLog();
+    if (activePage === 'queue') fetchActiveWaitingQueue();
+  }, [loggedInStaff, activePage, fetchTodayLog, fetchActiveWaitingQueue]);
 
+  // Poll every 4 seconds for Doctor Bell, Prescriptions, and Active Queue
   useEffect(() => {
     if (!loggedInStaff) return;
     fetchCatalog();
     fetchPrescriptions();
+    fetchActiveWaitingQueue();
     fetchTodayLog();
 
     const pollInterval = setInterval(async () => {
       fetchPrescriptions();
+      fetchActiveWaitingQueue();
       try {
         const res = await axios.get(`${API_BASE}/counter/alerts`);
         const latestBell = res.data;
@@ -335,7 +439,116 @@ export function useCounterPortalLogic() {
     }, 4000);
 
     return () => clearInterval(pollInterval);
-  }, [loggedInStaff, fetchCatalog, fetchPrescriptions, fetchTodayLog, lastSeenBellId]);
+  }, [loggedInStaff, fetchCatalog, fetchPrescriptions, fetchActiveWaitingQueue, fetchTodayLog, lastSeenBellId]);
+
+  // Smart Search for Queue Tab (Identical to Doctor Portal Search)
+  const handleQueuePatientSearch = async (pageToLoad = 1) => {
+    const { name, nic, phone, dob } = queueSearch;
+    if (!name.trim() && !nic.trim() && !phone.trim() && !dob.trim()) {
+      setQueueSearchResults([]);
+      return;
+    }
+    setSearchingQueuePatients(true);
+    try {
+      const res = await axios.get(`${API_BASE}/patients/search`, {
+        params: { name, nic, phone, dob, page: pageToLoad }
+      });
+      if (pageToLoad === 1) {
+        setQueueSearchResults(res.data.data || []);
+      } else {
+        setQueueSearchResults(prev => [...prev, ...(res.data.data || [])]);
+      }
+      setQueueSearchPage(pageToLoad);
+      setHasMoreQueueSearch(res.data.hasMore);
+    } catch {
+      showToast('Patient search failed.', 'error');
+    } finally {
+      setSearchingQueuePatients(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activePage !== 'queue') return;
+    const timer = setTimeout(() => {
+      const { name, nic, phone, dob } = queueSearch;
+      if (name.trim().length >= 2 || nic.trim().length >= 2 || phone.trim().length >= 2 || dob.trim().length >= 4) {
+        handleQueuePatientSearch(1);
+      } else if (!name.trim() && !nic.trim() && !phone.trim() && !dob.trim()) {
+        setQueueSearchResults([]);
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [queueSearch, activePage]);
+
+  // Add Patient to Today's Active Queue
+  const handleAddPatientToQueue = async (patientObj) => {
+    if (!patientObj || !patientObj.id) return;
+    setAddingToQueueId(patientObj.id);
+    try {
+      const res = await axios.post(`${API_BASE}/counter/queue/add`, {
+        patient_id: patientObj.id
+      });
+      showToast(`Added ${patientObj.name} to Active Queue (Queue #${res.data.daily_number})!`);
+      await fetchActiveWaitingQueue();
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Could not add patient to queue.', 'error');
+    } finally {
+      setAddingToQueueId(null);
+    }
+  };
+
+  // Cancel / Remove Patient from Active Queue (Walk-Out)
+  const handleRemoveFromActiveQueue = async (ticketId, patientName) => {
+    try {
+      await axios.put(`${API_BASE}/counter/queue/${ticketId}/cancel`);
+      showToast(`Removed ${patientName} from today's active queue.`);
+      await fetchActiveWaitingQueue();
+    } catch {
+      showToast('Failed to remove patient from queue.', 'error');
+    }
+  };
+
+  // Counter Full Patient Registration Submit (Clears form immediately for fast next entry)
+  const handleCounterRegisterPatient = async (e) => {
+    e.preventDefault();
+    if (!regForm.name.trim()) {
+      return showToast('Patient full name is required.', 'error');
+    }
+
+    setRegisteringPatient(true);
+    try {
+      const res = await axios.post(`${API_BASE}/patients`, regForm);
+      const createdPatient = res.data;
+
+      if (regForm.autoAddToQueue) {
+        await axios.post(`${API_BASE}/counter/queue/add`, {
+          patient_id: createdPatient.id
+        });
+        await fetchActiveWaitingQueue();
+        showToast(`✓ Registered ${createdPatient.name} & added to Doctor's Queue!`);
+      } else {
+        showToast(`✓ Successfully registered ${createdPatient.name}!`);
+      }
+
+      // Clear all fields immediately so Counter can register the next patient
+      setRegForm({
+        name: '',
+        birth_date: '',
+        phone: '',
+        id_number: '',
+        gender: '1',
+        married: '0',
+        weight: '',
+        height: '',
+        common: '',
+        autoAddToQueue: regForm.autoAddToQueue
+      });
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Failed to register patient.', 'error');
+    } finally {
+      setRegisteringPatient(false);
+    }
+  };
 
   const handleSelectSinglePrescription = (ticketId) => {
     setSelectedTicketIds([ticketId]);
@@ -587,7 +800,6 @@ export function useCounterPortalLogic() {
     }
   };
 
-  // Reprint a Bill from "Today's Log"
   const handleReprintFromTodayLog = (logRow) => {
     const formattedDate = new Intl.DateTimeFormat('en-GB', {
       timeZone: 'Asia/Colombo',
@@ -615,7 +827,6 @@ export function useCounterPortalLogic() {
     });
   };
 
-  // Step 1 of SMS: Open the Phone Number Confirmation Box
   const handleInitiateSmsFlow = () => {
     if (!completedBillModal) return;
     setSmsPhoneInput(completedBillModal.patient_phone || '');
@@ -628,7 +839,6 @@ export function useCounterPortalLogic() {
     }
   };
 
-  // Step 2 of SMS: Confirm & Dispatch SMS -> Turns into "SMS Sent!" state
   const handleConfirmAndSendSms = async () => {
     if (!completedBillModal) return;
     const cleanPhone = smsPhoneInput.trim();
@@ -656,7 +866,6 @@ export function useCounterPortalLogic() {
       setCompletedBillModal(prev => (prev ? { ...prev, patient_phone: cleanPhone } : prev));
       setIsEditingSmsPhone(false);
 
-      // Set clear visual confirmation state inside modal
       setSmsSentStatus({
         phone: cleanPhone,
         savedToProfile: Boolean(res.data.updatedPatientProfile)
@@ -700,6 +909,7 @@ export function useCounterPortalLogic() {
   return {
     DOCTOR_THEMES,
     calculateAge,
+    formatClearDate,
     currentClock,
     activeTheme,
     setActiveTheme,
@@ -781,8 +991,26 @@ export function useCounterPortalLogic() {
     setTodayLogSearch,
     todaySummary,
     handleReprintFromTodayLog,
+    activeWaitingQueue,
+    loadingWaitingQueue,
+    fetchActiveWaitingQueue,
+    queueSearch,
+    setQueueSearch,
+    queueSearchResults,
+    queueSearchPage,
+    hasMoreQueueSearch,
+    searchingQueuePatients,
+    handleQueuePatientSearch,
+    addingToQueueId,
+    handleAddPatientToQueue,
+    handleRemoveFromActiveQueue,
+    regForm,
+    setRegForm,
+    registeringPatient,
+    handleCounterRegisterPatient,
     doctorBellAlert,
     setDoctorBellAlert,
-    statusBanner
+    statusBanner,
+    playDoctorBellSound
   };
 }
