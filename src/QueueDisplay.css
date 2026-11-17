@@ -84,6 +84,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   text-transform: uppercase;
+  /* FIX: Give the font bounding box breathing room to prevent cropping */
+  line-height: 1.3;
+  padding: 10px 0;
 }
 
 .queue-item-row.next-up .queue-item-name {
