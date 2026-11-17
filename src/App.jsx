@@ -6,6 +6,8 @@ import CounterPortal from './CounterPortal';
 import AdminPortal from './AdminPortal';
 import GRNPortal from './GRNPortal';
 import QueueDisplay from './QueueDisplay';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 // Top Navigation Bar
 const TopNavbar = ({ currentTime, doctorOnline, counterOnline }) => (
@@ -41,6 +43,8 @@ const TopNavbar = ({ currentTime, doctorOnline, counterOnline }) => (
     </div>
   </header>
 );
+
+
 
 // Main Front Page
 const HomePage = () => {

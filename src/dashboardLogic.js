@@ -18,11 +18,34 @@ export function useDashboardLogic() {
   const [counterOnline] = useState(true);
 
   // Privacy-Safe Aggregate Clinic Telemetry (Mocked until Backend API is connected)
+  // 1. Replace your existing telemetry state with this:
   const [telemetry, setTelemetry] = useState({
-    activeQueue: 4,
-    servedToday: 38,
-    roomStatus: 'Consultation Active'
+    activeQueue: 0,
+    servedToday: 0,
+    roomStatus: 'OFFLINE'
   });
+
+  // 2. Paste this useEffect directly below it to fetch the real numbers:
+  useEffect(() => {
+    const fetchTelemetry = async () => {
+      try {
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const res = await axios.get(`${API_BASE}/system/public-stats`);
+        
+        setTelemetry({
+          activeQueue: res.data.queueCount || 0,
+          servedToday: res.data.dispensedToday || 0,
+          roomStatus: res.data.isDoctorOnline ? 'ACTIVE / ONLINE' : 'OFFLINE' 
+        });
+      } catch (err) {
+        console.error("Telemetry fetch failed", err);
+      }
+    };
+
+    fetchTelemetry();
+    const interval = setInterval(fetchTelemetry, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Canvas reference for the Ambient Particle Network
   const canvasRef = useRef(null);
