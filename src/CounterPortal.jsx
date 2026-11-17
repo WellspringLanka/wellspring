@@ -649,7 +649,7 @@ export default function CounterPortal() {
                 <div className="checkout-action-buttons">
                   <button
                     type="button"
-                    disabled={submittingCheckout || selectedTicketIds.length === 0}
+                    disabled={submittingCheckout || (selectedTicketIds.length === 0 && !customWalkInName.trim())}
                     className="outdoor-submit-btn"
                     onClick={() => handleFinalizeCheckout('OUTDOOR_RX')}
                   >
@@ -658,7 +658,7 @@ export default function CounterPortal() {
 
                   <button
                     type="button"
-                    disabled={submittingCheckout}
+                    disabled={submittingCheckout || (selectedTicketIds.length === 0 && !customWalkInName.trim())}
                     className="pos-grand-submit-btn"
                     onClick={() => handleFinalizeCheckout('COMPLETED_BILL')}
                   >
@@ -1024,8 +1024,8 @@ export default function CounterPortal() {
                       <input
                         type="radio"
                         name="counter_gender"
-                        value="2"
-                        checked={regForm.gender === '2'}
+                        value="0"
+                        checked={regForm.gender === '0'}
                         onChange={(e) => setRegForm({ ...regForm, gender: e.target.value })}
                       />
                       Female

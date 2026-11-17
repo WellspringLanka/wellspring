@@ -363,8 +363,8 @@ export default function DoctorPortal() {
                         <input
                           type="radio"
                           name="gender"
-                          value="2"
-                          checked={newPatientForm.gender === '2'}
+                          value="0"
+                          checked={newPatientForm.gender === '0'}
                           onChange={(e) => setNewPatientForm({ ...newPatientForm, gender: e.target.value })}
                         /> Female
                       </label>
@@ -552,7 +552,7 @@ export default function DoctorPortal() {
 
                   {!isEditingGender ? (
                     <div className="stacked-field-value" style={{ marginTop: '4px' }}>
-                      {selectedPatient.gender === 1 ? 'Male' : selectedPatient.gender === 2 ? 'Female' : 'Not Specified'}
+                      {selectedPatient.gender === 1 ? 'Male' : selectedPatient.gender === 0 ? 'Female' : 'Not Specified'}
                     </div>
                   ) : (
                     <select
@@ -562,7 +562,7 @@ export default function DoctorPortal() {
                       autoFocus
                     >
                       <option value="1">Male</option>
-                      <option value="2">Female</option>
+                      <option value="0">Female</option>
                     </select>
                   )}
                 </div>
