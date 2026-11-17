@@ -3,6 +3,7 @@ import { SLIDER_IMAGES, useDashboardLogic } from './dashboardLogic';
 import './App.css';
 import DoctorPortal from './DoctorPortal';
 import CounterPortal from './CounterPortal';
+import AdminPortal from './AdminPortal';
 
 // Top Navigation Bar
 const TopNavbar = ({ currentTime, doctorOnline, counterOnline }) => (
@@ -243,7 +244,7 @@ export default function App() {
     <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/admin" element={<PlaceholderPage title="Admin Management Portal" />} />
+        <Route path="/admin" element={<AdminPortal/>} />
         <Route path="/doctor" element={<DoctorPortal />} />
         <Route path="/counter" element={<CounterPortal />} />
         <Route path="/grn" element={<PlaceholderPage title="Stock & GRN Inventory Portal" />} />

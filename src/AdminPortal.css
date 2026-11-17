@@ -1,0 +1,242 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Tangerine:wght@700&display=swap');
+
+.admin-portal-wrapper {
+  background-color: #020617; /* Deepest Slate */
+  color: #f8fafc;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* TOP COMMAND BAR */
+.admin-topbar {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 28px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.admin-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-logo-text {
+  font-family: 'Tangerine', cursive;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #2dd4bf;
+  line-height: 1;
+}
+
+.admin-badge {
+  background: rgba(45, 212, 191, 0.15);
+  border: 1px solid rgba(45, 212, 191, 0.4);
+  color: #5eead4;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* MAIN LAYOUT */
+.admin-workspace {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 24px;
+  padding: 24px 28px;
+  flex: 1;
+}
+
+/* SIDEBAR */
+.admin-sidebar {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: calc(100vh - 120px);
+  position: sticky;
+  top: 90px;
+}
+
+.admin-nav-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  padding: 14px 16px;
+  border-radius: 10px;
+  text-align: left;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-nav-btn:hover {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+.admin-nav-btn.active {
+  background: #134e4a;
+  border: 1px solid #0f766e;
+  color: #5eead4;
+  box-shadow: 0 0 16px rgba(13, 148, 136, 0.2);
+}
+
+/* MAIN CONTENT AREA */
+.admin-content-area {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* FILTER BAR */
+.admin-filter-bar {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 14px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-btn-group {
+  display: flex;
+  background: #020617;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid #1e293b;
+}
+
+.filter-tab {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-tab:hover { color: #cbd5e1; }
+.filter-tab.active { background: #1e293b; color: #38bdf8; }
+
+.custom-date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-date-input {
+  background: #020617;
+  border: 1px solid #1e293b;
+  color: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color-scheme: dark;
+}
+
+/* KPI CARDS */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.kpi-card {
+  background: linear-gradient(145deg, #0f172a 0%, #020617 100%);
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card.profit {
+  border-color: #064e3b;
+  background: linear-gradient(145deg, #022c22 0%, #020617 100%);
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: #38bdf8;
+}
+.kpi-card.profit::before { background: #10b981; }
+
+.kpi-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+.kpi-card.profit .kpi-title { color: #6ee7b7; }
+
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+.kpi-card.profit .kpi-value { color: #10b981; }
+
+/* CHARTS CONTAINER */
+.chart-card {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  padding: 24px;
+  height: 400px;
+}
+
+.chart-header {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  margin-bottom: 20px;
+}
+
+.demographics-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+/* EXTENDED CHART GRIDS */
+.advanced-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.secondary-chart-card {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  padding: 24px;
+  height: 360px; /* Slightly shorter than main area chart */
+}
