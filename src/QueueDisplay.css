@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Inter:wght@800&display=swap');
+
+.queue-display-wrapper {
+  background-color: #000000;
+  color: #4ade80; /* High contrast terminal green */
+  min-height: 100vh;
+  width: 100vw;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.queue-display-header {
+  padding: 30px 40px;
+  border-bottom: 4px solid #166534;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #020617;
+}
+
+.queue-display-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin: 0;
+  color: #22c55e;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.queue-display-count {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #86efac;
+}
+
+.queue-list-container {
+  flex: 1;
+  padding: 40px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.queue-item-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  align-items: center;
+  background-color: #052e16;
+  border: 3px solid #15803d;
+  border-radius: 16px;
+  padding: 24px 40px;
+  box-shadow: 0 0 20px rgba(21, 128, 61, 0.4);
+}
+
+.queue-item-row.next-up {
+  background-color: #14532d;
+  border-color: #22c55e;
+  box-shadow: 0 0 40px rgba(34, 197, 94, 0.6);
+  animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+  0% { border-color: #15803d; box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+  50% { border-color: #4ade80; box-shadow: 0 0 60px rgba(34, 197, 94, 0.8); }
+  100% { border-color: #15803d; box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+}
+
+.queue-item-number {
+  font-size: 6rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.queue-item-name {
+  font-size: 4.5rem;
+  font-weight: 700;
+  color: #4ade80;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+
+.queue-item-row.next-up .queue-item-name {
+  color: #ffffff;
+}
+
+.queue-empty-state {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 4rem;
+  color: #166534;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.queue-error-banner {
+  background-color: #7f1d1d;
+  color: #fca5a5;
+  text-align: center;
+  padding: 15px;
+  font-size: 1.5rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+}
