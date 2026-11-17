@@ -4,6 +4,7 @@ import './App.css';
 import DoctorPortal from './DoctorPortal';
 import CounterPortal from './CounterPortal';
 import AdminPortal from './AdminPortal';
+import GRNPortal from './GRNPortal';
 
 // Top Navigation Bar
 const TopNavbar = ({ currentTime, doctorOnline, counterOnline }) => (
@@ -247,7 +248,7 @@ export default function App() {
         <Route path="/admin" element={<AdminPortal/>} />
         <Route path="/doctor" element={<DoctorPortal />} />
         <Route path="/counter" element={<CounterPortal />} />
-        <Route path="/grn" element={<PlaceholderPage title="Stock & GRN Inventory Portal" />} />
+        <Route path="/grn" element={<GRNPortal/>} />
         <Route path="/queue" element={<PlaceholderPage title="Live Clinic Queue" />} />
       </Routes>
     </Router>
