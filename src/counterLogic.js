@@ -282,7 +282,7 @@ export function useCounterPortalLogic() {
     birth_date: '',
     phone: '',
     id_number: '',
-    gender: '1',
+    gender: '',
     married: '0',
     weight: '',
     height: '',
@@ -519,6 +519,10 @@ export function useCounterPortalLogic() {
       return showToast('Mobile phone number is required.', 'error');
     }
 
+    if (!regForm.gender) {
+      return showToast('Please select a gender.', 'error');
+    }
+
     setRegisteringPatient(true);
     try {
       const res = await axios.post(`${API_BASE}/patients`, regForm);
@@ -540,7 +544,7 @@ export function useCounterPortalLogic() {
         birth_date: '',
         phone: '',
         id_number: '',
-        gender: '1',
+        gender: '',
         married: '0',
         weight: '',
         height: '',

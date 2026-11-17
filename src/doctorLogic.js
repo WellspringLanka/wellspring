@@ -62,7 +62,7 @@ export function useDoctorPortalLogic() {
   const [searching, setSearching] = useState(false);
 
   const [newPatientForm, setNewPatientForm] = useState({
-    name: '', birth_date: '', phone: '', id_number: '', gender: '1', married: '0', weight: '', height: '', common: ''
+    name: '', birth_date: '', phone: '', id_number: '', gender: '', married: '0', weight: '', height: '', common: ''
   });
   const [creatingPatient, setCreatingPatient] = useState(false);
 
@@ -205,11 +205,17 @@ export function useDoctorPortalLogic() {
   const handleCreateWalkInPatient = async (e) => {
     e.preventDefault();
     if (!newPatientForm.name.trim()) { showToast('Patient name is required.', 'error'); return; }
+    
+    // NEW: Force doctor to pick a gender
+    if (!newPatientForm.gender) { showToast('Please select a gender.', 'error'); return; } 
+
     setCreatingPatient(true);
     try {
       const res = await axios.post(`${API_BASE}/patients`, newPatientForm);
       showToast(`Registered ${res.data.name}.`);
-      setNewPatientForm({ name: '', birth_date: '', phone: '', id_number: '', gender: '1', married: '0', weight: '', height: '', common: '' });
+      
+      // Update the reset to clear gender to ''
+      setNewPatientForm({ name: '', birth_date: '', phone: '', id_number: '', gender: '', married: '0', weight: '', height: '', common: '' });
       await selectPatientForConsultation(res.data, null);
     } catch (err) {
       showToast('Failed to register patient.', 'error');
