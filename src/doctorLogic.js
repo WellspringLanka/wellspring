@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { API_BASE } from './config/api';
 
 export const DOCTOR_THEMES = [
   { id: 'ocean', name: 'Ocean Medical Blue', swatch: '#0284c7' },

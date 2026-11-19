@@ -1,16 +1,62 @@
-# React + Vite
+# Wellspring Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite frontend for the Wellspring clinic system. Runs on Bun; the API is
+served by the sibling `wellspring-api` project.
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- [Bun](https://bun.sh) 1.4+
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+bun install
+cp .env.example .env    # optional; defaults work with the local backend
+bun run dev             # http://localhost:5173
+```
 
-## Expanding the ESLint configuration
+## Scripts
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+bun run dev       # Vite dev server with HMR on port 5173
+bun run build     # production build into dist/
+bun run preview   # preview the build on port 4173
+bun run lint      # ESLint
+```
+
+All Vite commands run through the Bun runtime (`bunx --bun vite`), not Node.
+
+## API connection
+
+API calls go to `/api` by default. Vite proxies `/api` to the backend so there are
+no CORS issues in development:
+
+- proxy target: `VITE_PROXY_TARGET`, or the origin of `VITE_API_URL`, or
+  `http://localhost:5000`
+- direct calls: set `VITE_API_URL` (for example `https://api.example.com/api`) to
+  bypass the proxy entirely
+
+The URL is defined once in `src/config/api.js` and imported by every portal's logic
+file.
+
+## Start the backend
+
+```bash
+cd ../wellspring-api
+bun install
+bun run start           # http://localhost:5000
+```
+
+## What's in `src/`
+
+```
+src/
+  config/api.js         shared API base URL
+  adminLogic.js         admin portal state/API
+  counterLogic.js       counter + billing logic
+  doctorLogic.js        doctor portal logic
+  grnLogic.js           inventory/GRN logic
+  queueDisplayLogic.js  public queue display
+  dashboardLogic.js     landing page telemetry
+  *Portal.jsx           page components
+```

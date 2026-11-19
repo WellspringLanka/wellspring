@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { DOCTOR_THEMES, calculateAge, formatClearDate } from './doctorLogic';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { API_BASE } from './config/api';
 
 // Format live Sri Lanka Clock (Asia/Colombo)
 export function getFormattedSriLankaClock() {

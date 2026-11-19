@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+import { API_BASE } from './config/api';
 
 // Clean, high-trust medical & clinical photography
 export const SLIDER_IMAGES = [
@@ -29,7 +31,6 @@ export function useDashboardLogic() {
   useEffect(() => {
     const fetchTelemetry = async () => {
       try {
-        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
         const res = await axios.get(`${API_BASE}/system/public-stats`);
         
         setTelemetry({
